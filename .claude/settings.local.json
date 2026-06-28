@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"c:\\\\Users\\\\Admin\\\\Legacy Mania\"; Start-Process -NoNewWindow -FilePath \"npm\" -ArgumentList \"run\",\"dev\" -RedirectStandardOutput \"$env:TEMP\\\\devserver.log\" -RedirectStandardError \"$env:TEMP\\\\devserver_err.log\"; Start-Sleep -Seconds 8; Get-Content \"$env:TEMP\\\\devserver.log\",\"$env:TEMP\\\\devserver_err.log\" -ErrorAction SilentlyContinue)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(cat .claude/mcp.json)",
+      "Bash(cat ../.claude/mcp.json)",
+      "Bash(claude mcp *)",
+      "Bash(npx skills *)",
+      "PowerShell(supabase --version)"
+    ]
+  }
+}

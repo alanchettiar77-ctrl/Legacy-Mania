@@ -1,0 +1,151 @@
+# update.md — Legacy Mania Deployment Log
+
+---
+
+## [2026-06-22] — v0.1.0 — Initial Platform Build ✅
+
+### Date
+June 22, 2026
+
+### Type
+Initial Build — Production-Ready Foundation
+
+### Status
+✅ Build passes. All routes compile. TypeScript clean.
+
+### Features Added
+- Complete Next.js 15 + TypeScript + TailwindCSS project setup
+- Supabase database schema (11 tables, full RLS)
+- Authentication system (Login, Register, Session Management)
+- Home page with 7 sections (Hero, Featured, Categories, Latest, Testimonials, WhatsApp CTA, Newsletter)
+- Catalog page with search, filter, and sort
+- Product detail page with image gallery, add to cart, wishlist
+- Cart drawer with 5-card minimum enforcement
+- Checkout flow with UPI QR payment + screenshot upload
+- User account pages (Profile, Orders, Wishlist)
+- Admin Dashboard with full CMS
+- Admin: Products, Orders, Categories, Users, Analytics, Settings
+- UPI payment verification workflow
+- WhatsApp floating button + inquiry + order confirmation
+- Dynamic sitemap.xml + robots.txt
+- Security headers via vercel.json
+
+### Features Modified
+- N/A (Initial build)
+
+### Bugs Fixed
+- Removed non-existent `@radix-ui/react-badge` and `@radix-ui/react-sheet` packages
+- Fixed font loading (Google Fonts SSL issue → system font fallback)
+- Added `autoprefixer` to devDependencies (was missing, caused PostCSS build failure)
+- Fixed Supabase client type inference (removed Database generic, use explicit casts)
+- Fixed ThemeProviderProps import from next-themes
+
+### Migrations Performed
+- `001_initial_schema.sql` — Initial database schema (pending: must be run in Supabase)
+
+### Build Output
+- 22 routes compiled
+- All admin, shop, auth, account, API routes working
+- Static + Dynamic rendering configured correctly
+
+### Environment
+- Framework: Next.js 15.0.0
+- Node: 18+
+- Database: Supabase PostgreSQL
+- Hosting: Vercel Free Tier (configured)
+
+### Next Steps for Launch
+1. ✅ Code complete — run this file in Supabase SQL Editor: `supabase/migrations/001_initial_schema.sql`
+2. Create storage buckets: `products` (public), `payments` (private), `settings` (public)
+3. Copy `.env.local.example` to `.env.local`, fill Supabase credentials
+4. Set first user as admin: `UPDATE profiles SET role = 'admin' WHERE email = 'your@email.com';`
+5. Upload UPI QR code via Admin → Settings → UPI Payment
+6. Set WhatsApp number via Admin → Settings → WhatsApp
+7. Add products via Admin → Products → Add Product
+8. Deploy to Vercel: `vercel --prod`
+9. Set environment variables in Vercel dashboard
+
+---
+
+## [2026-06-22] — v0.2.0 — Priority 2 Feature Completion ✅
+
+### Date
+June 22, 2026
+
+### Type
+Feature Addition — Missing Core Pages
+
+### Status
+✅ Build passes. 33 routes. Zero TypeScript errors.
+
+### Features Added
+- `/catalog/[slug]` — Category browse page (Pokémon, Naruto, DBZ etc.)
+- `/account/addresses` — Full CRUD address manager with modal form, default address
+- `/account/settings` — Edit name/phone, change password
+- `/forgot-password` — Send Supabase password reset email
+- `/reset-password` — Confirm new password from email link
+- `/account/orders/[id]` — Order detail with items, timeline, delivery, payment info
+- `/admin/products/[id]/edit` — Edit existing product via ProductForm
+
+### Features Modified
+- Catalog client: added `pageTitle`/`pageDescription` props for category pages
+- Orders list: links to detail pages
+- addresses SQL schema: added `label`, `updated_at`; renamed `address_line1` → `street`
+
+### Build Output
+- 33 routes compiled (was 22 in v0.1.0)
+
+### Next Steps
+- Soft-delete products from admin table
+- Catalog pagination
+- Product JSON-LD schema
+- Policy pages (FAQ, Shipping, Returns, Privacy, Terms, Contact)
+- OG image file
+
+---
+
+## [2026-06-22] — v0.3.0 — Policy Pages, Admin Improvements ✅
+
+### Type
+Feature Addition — SEO, Policy Pages, Admin UX
+
+### Status
+✅ 39 routes. Zero TypeScript errors.
+
+### Features Added
+- `/faq` — 12 accordion Q&As
+- `/shipping-policy`, `/return-policy`, `/privacy-policy`, `/terms`, `/contact`
+- Admin products: soft-delete (toggle `is_active`) and visibility toggle
+- Product pages: JSON-LD `Product` structured data for Google Shopping
+
+### Next Steps
+- Catalog pagination
+- Product image lightbox
+- WhatsApp admin notification on new order
+- Newsletter email storage in DB
+
+---
+
+## [2026-06-22] — v0.4.0 — Pagination + Newsletter Backend ✅
+
+### Type
+Feature Addition
+
+### Status
+✅ 40 routes. Zero errors.
+
+### Features Added
+- URL-based catalog pagination (24 per page, prev/next, smart ellipsis)
+- Newsletter subscription wired to Supabase `newsletter_subscribers` table
+- `newsletter_subscribers` added to SQL migration
+
+### Next Steps
+- Product image lightbox on product detail page
+- Price range filter in catalog
+- WhatsApp admin notification on new order
+- OG image placeholder
+- Admin newsletter subscriber list
+
+---
+
+*Updated: 2026-06-22*

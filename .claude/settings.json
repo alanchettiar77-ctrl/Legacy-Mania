@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(npx supabase --version 2>$null; \\(Get-Command npx -ErrorAction SilentlyContinue\\) | Select-Object -ExpandProperty Source)",
+      "PowerShell($configPath = \"$env:APPDATA\\\\supabase\"; if \\(Test-Path $configPath\\) { Get-ChildItem $configPath -Recurse | Select-Object FullName } else { \"No Supabase config found at $configPath\" })",
+      "PowerShell(node --version)",
+      "PowerShell(Get-Process -Name \"node\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force -ErrorAction SilentlyContinue)"
+    ]
+  }
+}
