@@ -74,17 +74,12 @@ export default function AccountSettingsPage() {
   }, []);
 
   const onSaveProfile = async (data: ProfileFormData) => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
-      .from("profiles")
-      .update({ full_name: data.full_name, phone: data.phone || null })
-      .eq("id", user.id);
-    if (error) {
+    const res = await fetch("/api/account/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ full_name: data.full_name, phone: data.phone || null }),
+    });
+    if (!res.ok) {
       toast.error("Failed to update profile");
       return;
     }
