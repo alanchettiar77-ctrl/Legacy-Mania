@@ -34,8 +34,12 @@ export default function LoginPage() {
     toast.success("Welcome back!");
 
     const redirectParam = new URLSearchParams(window.location.search).get("redirect");
-    // Go to /admin — middleware allows admins through, redirects customers to /account
-    window.location.href = redirectParam ?? "/admin";
+    // If redirect is /account (set by middleware when user icon is clicked while logged out),
+    // ignore it and go to /admin so middleware can route based on role:
+    // admins → /admin, customers → /account
+    const destination =
+      redirectParam && !redirectParam.startsWith("/account") ? redirectParam : "/admin";
+    window.location.href = destination;
   };
 
   return (
