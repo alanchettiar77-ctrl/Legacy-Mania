@@ -52,7 +52,7 @@ export async function updateSession(request: NextRequest) {
     const role = profiles?.[0]?.role;
 
     if (role !== "admin") {
-      return NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(new URL("/account", request.url));
     }
   }
 

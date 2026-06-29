@@ -34,8 +34,8 @@ export default function LoginPage() {
     toast.success("Welcome back!");
 
     const redirectParam = new URLSearchParams(window.location.search).get("redirect");
-    // Full page navigation so cookies are available server-side on the next request
-    window.location.href = redirectParam ?? "/auth/redirect";
+    // Go to /admin — middleware allows admins through, redirects customers to /account
+    window.location.href = redirectParam ?? "/admin";
   };
 
   return (
