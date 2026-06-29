@@ -34,14 +34,8 @@ export default function LoginPage() {
     toast.success("Welcome back!");
 
     const redirectParam = new URLSearchParams(window.location.search).get("redirect");
-    if (redirectParam) {
-      window.location.href = redirectParam;
-      return;
-    }
-
-    const roleRes = await fetch("/api/auth/role");
-    const { role } = roleRes.ok ? await roleRes.json() : { role: "customer" };
-    window.location.href = role === "admin" ? "/admin" : "/account";
+    // Full page navigation so cookies are available server-side on the next request
+    window.location.href = redirectParam ?? "/auth/redirect";
   };
 
   return (
