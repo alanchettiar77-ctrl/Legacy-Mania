@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HeroSection from "@/components/home/hero-section";
+import AnnouncementBar from "@/components/home/announcement-bar";
 import FeaturedCollections from "@/components/home/featured-collections";
 import LatestReleases from "@/components/home/latest-releases";
 import PopularCategories from "@/components/home/popular-categories";
@@ -41,6 +42,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <AnnouncementBar />
       <HeroSection />
       <FeaturedCollections products={featured ?? []} />
       <PopularCategories categories={categories ?? []} />
