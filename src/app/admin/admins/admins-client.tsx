@@ -15,9 +15,11 @@ interface Admin {
 export default function AdminsClient({
   initialAdmins,
   currentUserId,
+  ownerEmail,
 }: {
   initialAdmins: Admin[];
   currentUserId: string;
+  ownerEmail: string;
 }) {
   const [admins, setAdmins] = useState(initialAdmins);
   const [email, setEmail] = useState("");
@@ -119,6 +121,7 @@ export default function AdminsClient({
         <div className="divide-y divide-border">
           {admins.map((admin) => {
             const isYou = admin.id === currentUserId;
+            const isOwner = admin.email === ownerEmail;
             const isRemoving = removingId === admin.id;
             return (
               <div key={admin.id} className="flex items-center gap-4 px-6 py-4">
@@ -133,7 +136,13 @@ export default function AdminsClient({
                     <p className="text-sm font-semibold text-foreground truncate">
                       {admin.full_name ?? admin.email}
                     </p>
-                    {isYou && (
+                    {isOwner && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded-full">
+                        <Shield className="w-3 h-3" />
+                        Owner
+                      </span>
+                    )}
+                    {isYou && !isOwner && (
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                         <UserCheck className="w-3 h-3" />
                         You
@@ -144,8 +153,8 @@ export default function AdminsClient({
                   <p className="text-xs text-muted-foreground">Added {formatDate(admin.created_at)}</p>
                 </div>
 
-                {/* Remove */}
-                {!isYou && (
+                {/* Remove — hidden for owner */}
+                {!isYou && !isOwner && (
                   <button
                     onClick={() => handleRemove(admin.id, admin.email)}
                     disabled={isRemoving}

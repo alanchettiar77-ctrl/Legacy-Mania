@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const OWNER_EMAIL = "alan.chettiar.77@gmail.com";
 
 async function getCallerRole(userId: string): Promise<string | null> {
   const res = await fetch(
@@ -69,6 +70,16 @@ export async function DELETE(req: NextRequest) {
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "User ID is required" }, { status: 400 });
   if (id === user.id) return NextResponse.json({ error: "You cannot remove your own admin access." }, { status: 400 });
+
+  // Protect the owner account — cannot be demoted by anyone
+  const targetRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${id}&select=email&limit=1`,
+    { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }, cache: "no-store" }
+  );
+  const targetRows = targetRes.ok ? await targetRes.json() : [];
+  if (targetRows?.[0]?.email === OWNER_EMAIL) {
+    return NextResponse.json({ error: "The store owner's admin access cannot be removed." }, { status: 403 });
+  }
 
   // Check there will still be at least one admin left
   const countRes = await fetch(

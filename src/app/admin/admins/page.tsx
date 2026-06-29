@@ -22,6 +22,8 @@ export default async function AdminsPage() {
   );
   const admins = res.ok ? await res.json() : [];
 
+  const ownerEmail = "alan.chettiar.77@gmail.com";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -40,7 +42,7 @@ export default async function AdminsPage() {
         Only grant admin access to people you fully trust — admins can manage products, orders, and store settings.
       </div>
 
-      <AdminsClient initialAdmins={admins} currentUserId={user.id} />
+      <AdminsClient initialAdmins={admins} currentUserId={user.id} ownerEmail={ownerEmail} />
     </div>
   );
 }
