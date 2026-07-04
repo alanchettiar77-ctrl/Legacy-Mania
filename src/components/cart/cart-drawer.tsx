@@ -35,6 +35,9 @@ export default function CartDrawer() {
 
       {/* Drawer */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Shopping cart"
         className={cn(
           "fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-background border-l border-border shadow-2xl transition-transform duration-300 flex flex-col",
           isOpen ? "translate-x-0" : "translate-x-full"
@@ -53,6 +56,7 @@ export default function CartDrawer() {
           </div>
           <button
             onClick={closeCart}
+            aria-label="Close cart"
             className="p-2 rounded-lg hover:bg-accent transition-colors"
           >
             <X className="w-5 h-5" />
