@@ -123,6 +123,34 @@ export type Database = {
         };
         Relationships: [];
       };
+      faqs: {
+        Row: {
+          id: string;
+          question: string;
+          answer: string;
+          display_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          question: string;
+          answer: string;
+          display_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          question?: string;
+          answer?: string;
+          display_order?: number;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       products: {
         Row: {
           id: string;
