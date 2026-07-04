@@ -6,14 +6,15 @@ Pending and future work. AI Developer: check this before every session.
 
 ## 🔴 Priority 1 — Required Before Launch
 
-- [ ] **Supabase setup** — Create project, run SQL migration, set up storage buckets
-- [ ] **Environment variables** — Fill `.env.local` with real Supabase credentials
-- [ ] **Admin account** — Register first user, set `role = 'admin'` via SQL
-- [ ] **Upload UPI QR** — via Admin → Settings → UPI Payment
-- [ ] **Set WhatsApp number** — via Admin → Settings → WhatsApp
-- [ ] **Add product catalog** — Upload products via Admin → Products → Add Product
+- [x] **Supabase setup** — Project created, `.env.local` has live Supabase URL/anon/service-role keys
+- [x] **Environment variables** — `.env.local` fully populated (Supabase, WhatsApp, analytics)
+- [x] **Admin account** — Admin login/redirect flow working; `/admin/admins` page manages access with owner protection
+- [ ] **Upload UPI QR** — via Admin → Settings → UPI Payment (verify still set after recent settings work)
+- [x] **Set WhatsApp number** — `NEXT_PUBLIC_WHATSAPP_NUMBER` set in `.env.local`
+- [ ] **Add product catalog** — Verify real products are uploaded via Admin → Products → Add Product
 - [ ] **Set up categories** — Verify seeded categories are correct
-- [ ] **Deploy to Vercel** — Connect GitHub repo, add environment variables
+- [ ] **Deploy to Vercel** — Confirm production deploy is live and env vars match `.env.local`
+- [ ] **Reconcile migration** — `supabase/migrations/001_initial_schema.sql` has uncommitted local changes; confirm they match the live Supabase schema, then commit
 
 ---
 
@@ -31,6 +32,15 @@ Pending and future work. AI Developer: check this before every session.
 - [ ] **OG Image** — Create `/public/og-image.jpg` for social sharing
 
 ---
+
+## 🟢 Priority 3 — Enhancement (recent, undocumented until now)
+
+- [x] **Admin access management** — `/admin/admins` page to add/remove admins, with owner-account protection
+- [x] **Post-login role routing** — `/auth/redirect` server page routes admins → `/admin`, customers → `/account` after login
+- [x] **Homepage announcement banner** — Scrolling announcement bar component
+- [x] **Google Search Console verification** — Meta tag + verification file added
+- [x] **Next.js security upgrade** — Upgraded to 16.2.9, patches CVE-2025-66478 (RCE)
+- [x] **Profile update fix** — Routed through server API with service role key (was silently failing via browser client)
 
 ## 🟢 Priority 3 — Enhancement
 

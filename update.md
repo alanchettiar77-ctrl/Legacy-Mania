@@ -148,4 +148,42 @@ Feature Addition
 
 ---
 
-*Updated: 2026-06-22*
+## [2026-06-30] — v0.5.0 — Security, Admin Access Control, Auth Fixes ✅
+
+### Type
+Security Patch + Bug Fixes — Admin Auth Flow, Access Management
+
+### Status
+✅ Build passes. Deployed to production. Supabase fully wired up (env vars set, live URL/keys confirmed).
+
+### Features Added
+- `/admin/admins` — Admin access management page (list/add/remove admins)
+- Owner protection — the designated store owner account can't be demoted or removed via admin access management
+- `/auth/redirect` — Server page that checks role post-login and routes admins → `/admin`, customers → `/account`
+- Scrolling announcement banner on homepage (`announcement-bar.tsx`)
+- Google Search Console verification (meta tag + verification file)
+
+### Bugs Fixed
+- Admin login redirect: navbar user icon linked to `/account`, so unauthenticated admins were bounced to `/account` post-login instead of `/admin`. Login now always redirects to `/admin` and lets middleware route by role.
+- Profile update silently failing — now routes through a server API using the service role key instead of the browser client
+- **Upgraded Next.js to 16.2.9** — patches CVE-2025-66478 (RCE vulnerability) in previous version
+
+### Migrations Performed
+- `supabase/migrations/001_initial_schema.sql` — local working changes pending (uncommitted in git); verify against live Supabase schema before next deploy
+
+### Environment
+- `.env.local` fully populated: Supabase URL/anon key/service role key, WhatsApp number, analytics IDs
+- Framework: Next.js 16.2.9
+
+### Next Steps
+- Confirm uncommitted `supabase/migrations/001_initial_schema.sql` changes are applied to the live Supabase project, then commit
+- Product image lightbox on product detail page
+- Price range filter in catalog
+- WhatsApp admin notification on new order
+- OG image (`/public/og-image.jpg`) — still missing
+- Order confirmation email (Supabase Edge Function or Resend)
+- Admin audit log viewer, CSV order export, bulk product upload (Priority 3, later)
+
+---
+
+*Updated: 2026-06-30*
