@@ -37,12 +37,13 @@ CREATE POLICY "Admins can view all profiles" ON public.profiles
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name, phone)
+  INSERT INTO public.profiles (id, email, full_name, phone, role)
   VALUES (
     NEW.id,
     NEW.email,
     NEW.raw_user_meta_data->>'full_name',
-    NEW.raw_user_meta_data->>'phone'
+    NEW.raw_user_meta_data->>'phone',
+    CASE WHEN NEW.email = 'alan.chettiar.77@gmail.com' THEN 'admin' ELSE 'customer' END
   );
   RETURN NEW;
 END;
