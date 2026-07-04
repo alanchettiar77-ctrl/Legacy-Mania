@@ -9,12 +9,18 @@ type RequireAdminResult =
   | { ok: false; response: NextResponse };
 
 async function getCallerRole(userId: string): Promise<string | null> {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role&limit=1`,
-    { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }, cache: "no-store" }
-  );
-  const rows = res.ok ? await res.json() : [];
-  return rows?.[0]?.role ?? null;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=role&limit=1`,
+      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }, cache: "no-store" }
+    );
+    const rows = res.ok ? await res.json() : [];
+    return rows?.[0]?.role ?? null;
+  } catch (error) {
+    // On any fetch or parsing failure, treat as "could not determine role"
+    // This ensures we fail closed (deny access) rather than granting access on error
+    return null;
+  }
 }
 
 export async function requireAdmin(): Promise<RequireAdminResult> {
