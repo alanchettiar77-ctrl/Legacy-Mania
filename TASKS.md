@@ -47,6 +47,7 @@ Pending and future work. AI Developer: check this before every session.
 - [x] **Soft-delete products** — Admin products table now has toggle visibility + remove (sets `is_active = false`)
 - [x] **JSON-LD structured data** — Product pages now emit `Product` schema with price, availability, seller
 - [x] **FAQ page** — `/faq` with 12 Q&As, accordion-style
+- [x] **Admin FAQ management** — `/admin/faqs` page: add/edit/reorder/hide/delete FAQs against the `faqs` table via `/api/admin/faqs*` routes
 - [x] **Shipping policy** — `/shipping-policy` with full delivery info
 - [x] **Return policy** — `/return-policy` with eligibility, process, refund timeline
 - [x] **Privacy policy** — `/privacy-policy` with GDPR-style detail

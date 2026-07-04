@@ -186,4 +186,42 @@ Security Patch + Bug Fixes — Admin Auth Flow, Access Management
 
 ---
 
-*Updated: 2026-06-30*
+## [2026-07-05] — v0.6.0 — FAQ System (Public Page + Admin Management) ✅
+
+### Type
+Feature Addition — Database-Backed FAQ System
+
+### Status
+✅ Jest (33 tests), `tsc --noEmit`, and Playwright E2E (11 passed, 1 intentionally skipped) all pass against the live dev server and live Supabase database.
+
+### Features Added
+- `faqs` table (migration, RLS: public read of active rows only; writes via service-role API routes)
+- `GET /api/faqs` — public, active FAQs only, ordered by `display_order`
+- `POST /api/admin/faqs`, `PATCH`/`DELETE /api/admin/faqs/:id` — admin-only (via `requireAdmin()`), validated with shared `faqCreateSchema`/`faqUpdateSchema`
+- `/faq` — public accordion page now reads from the `faqs` table instead of being hardcoded
+- `/admin/faqs` — new admin page: add/edit FAQs via modal form, reorder (swaps `display_order` between two rows), toggle active/hidden, delete with confirmation
+- Sidebar nav entry for FAQs (between Categories and Users)
+- `e2e/admin-faqs.spec.ts` — full admin flow test (add → edit → reorder → deactivate → delete), logging in as a real admin account and cleaning up its own test data
+
+### Features Modified
+- `src/components/admin/admin-sidebar.tsx` — added `HelpCircle` nav item for `/admin/faqs`
+- `playwright.config.ts` — now loads `.env.local` manually so `E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD` reach the Playwright test process (Next.js's own `.env.local` auto-load doesn't extend to the separate Playwright runner)
+
+### Bugs Fixed / Notes
+- The admin FAQ E2E test is restricted to the desktop (chromium) Playwright project — the site-wide fixed WhatsApp contact widget overlaps the FAQ table's row action buttons on the narrow Pixel 5 mobile viewport used by the "mobile" project, causing spurious click interception unrelated to the feature itself.
+
+### Environment
+- `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` set in `.env.local` for a real admin account, enabling the admin E2E test to log in for real
+
+### Next Steps
+- Confirm uncommitted `supabase/migrations/001_initial_schema.sql` changes are applied to the live Supabase project, then commit
+- Product image lightbox on product detail page
+- Price range filter in catalog
+- WhatsApp admin notification on new order
+- OG image (`/public/og-image.jpg`) — still missing
+- Order confirmation email (Supabase Edge Function or Resend)
+- Admin audit log viewer, CSV order export, bulk product upload (Priority 3, later)
+
+---
+
+*Updated: 2026-07-05*

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, Tag, ShoppingBag,
-  Users, BarChart3, Settings, Zap, ChevronRight, Shield
+  Users, BarChart3, Settings, Zap, ChevronRight, Shield, HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ const navItems = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: Tag },
+  { href: "/admin/faqs", label: "FAQs", icon: HelpCircle },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/admins", label: "Admin Access", icon: Shield },
