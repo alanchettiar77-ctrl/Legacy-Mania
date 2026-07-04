@@ -62,4 +62,23 @@ describe("POST /api/admin/faqs", () => {
     expect(response.status).toBe(201);
     expect(body.display_order).toBe(5);
   });
+
+  it("creates a faq with display_order 0 when table is empty", async () => {
+    mockRequireAdmin.mockResolvedValue({ ok: true, userId: "admin-1" });
+    global.fetch = jest
+      .fn()
+      // 1st call: fetch max display_order (empty table)
+      .mockResolvedValueOnce({ ok: true, json: async () => [] })
+      // 2nd call: insert
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: "new-id", question: "Q?", answer: "A", display_order: 0, is_active: true }],
+      }) as unknown as typeof fetch;
+
+    const response = await POST(makeRequest({ question: "Q?", answer: "A" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.display_order).toBe(0);
+  });
 });
