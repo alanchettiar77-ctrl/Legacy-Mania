@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -26,9 +27,17 @@ async function apiRequest(path: string, options?: RequestInit) {
 }
 
 export default function FaqsTable({ initialFaqs }: { initialFaqs: Faq[] }) {
+  const router = useRouter();
   const [faqs, setFaqs] = useState(initialFaqs);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Faq | null>(null);
+
+  // Keep local state in sync whenever the server component re-fetches (e.g. via
+  // router.refresh() after a partially-failed reorder below), so a resync actually
+  // replaces stale/incorrect local state instead of being a no-op.
+  useEffect(() => {
+    setFaqs(initialFaqs);
+  }, [initialFaqs]);
 
   const form = useForm<FaqCreateInput>({
     resolver: zodResolver(faqCreateSchema),
@@ -121,6 +130,11 @@ export default function FaqsTable({ initialFaqs }: { initialFaqs: Faq[] }) {
       });
     } catch {
       toast.error("Failed to reorder");
+      // One of the two PATCH requests may have already succeeded, leaving the DB in a
+      // partially-swapped state that no longer matches what's displayed. Re-run the server
+      // component's data fetch and let the useEffect above resync local state to the
+      // server's actual current data, instead of leaving stale/incorrect local state.
+      router.refresh();
     }
   };
 

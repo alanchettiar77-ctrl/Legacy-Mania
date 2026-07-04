@@ -26,6 +26,29 @@ describe("faqCreateSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("strips stray control characters from question and answer", () => {
+    const result = faqCreateSchema.safeParse({
+      question: "Do you ship\x07 internationally?",
+      answer: "Yes\x00, we do\x1F.",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.question).toBe("Do you ship internationally?");
+      expect(result.data.answer).toBe("Yes, we do.");
+    }
+  });
+
+  it("preserves newlines and tabs in the answer", () => {
+    const result = faqCreateSchema.safeParse({
+      question: "Some question?",
+      answer: "Line one\nLine two\tindented",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.answer).toBe("Line one\nLine two\tindented");
+    }
+  });
 });
 
 describe("faqUpdateSchema", () => {

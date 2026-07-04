@@ -55,6 +55,16 @@ test.describe("Admin FAQ management", () => {
       await updatedRow.getByTitle("Hide").click();
       await expect(updatedRow.getByText("Hidden")).toBeVisible();
 
+      // Regression check for the bug where the admin page read FAQs through the
+      // session-scoped (RLS-subject) client: the faqs table's only RLS policy is
+      // "Anyone can view active faqs" (is_active = TRUE), so a deactivated FAQ would
+      // silently vanish from the admin table on reload, making it impossible to
+      // re-activate through the UI. Reload and confirm it's still visible as "Hidden".
+      await page.reload();
+      const reloadedRow = page.locator("tr", { hasText: editedQuestion });
+      await expect(reloadedRow).toBeVisible();
+      await expect(reloadedRow.getByText("Hidden")).toBeVisible();
+
       // Delete
       page.once("dialog", (dialog) => dialog.accept());
       await updatedRow.getByTitle("Delete").click();

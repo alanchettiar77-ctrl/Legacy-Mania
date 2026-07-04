@@ -1,8 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import FaqsTable from "./faqs-table";
 
 export default async function AdminFaqsPage() {
-  const supabase = await createClient();
+  // Uses the service-role client, not the session-scoped one: the faqs table's only RLS
+  // policy is "Anyone can view active faqs" (is_active = TRUE), with no admin-bypass read
+  // policy. Reading via the regular client would silently hide inactive FAQs from this
+  // table on every reload, making them impossible to re-activate/edit/delete through the UI.
+  const supabase = await createAdminClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any;
   const { data: faqsRaw } = await db

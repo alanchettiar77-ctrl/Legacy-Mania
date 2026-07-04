@@ -33,7 +33,10 @@ export default async function FAQPage() {
     <div className="section-padding">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // Escape "<" so an admin-authored answer containing the literal text "</script>"
+        // can't prematurely close this tag. "<" is a valid JSON escape for "<" that
+        // JSON.parse (and structured-data parsers) decode back to a literal "<" unchanged.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <div className="container-max px-4 md:px-8">
         <div className="max-w-3xl mx-auto">

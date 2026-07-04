@@ -30,23 +30,28 @@ export async function createClient() {
 }
 
 export async function createAdminClient() {
-  const cookieStore = await cookies();
-
+  // Deliberately does NOT wire up the request's cookies. @supabase/ssr's session storage
+  // uses whatever session it finds via auth.getSession(), and supabase-js's Authorization
+  // header prefers that session's access_token over the key passed to createServerClient
+  // (see SupabaseClient#_getAccessToken: `session?.access_token ?? this.supabaseKey`). If
+  // this client read the signed-in admin's cookies, Postgrest would receive the admin's own
+  // "authenticated" JWT as the bearer token instead of the service-role key, so RLS would
+  // still apply to the admin's requests — silently defeating the whole point of this
+  // "admin"/service-role client. Passing no cookies means there's never a session to find,
+  // so _getAccessToken() always falls back to the service-role key, guaranteeing RLS bypass.
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll();
+          return [];
         },
-        setAll(cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
+        setAll() {},
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
       },
     }
   );
