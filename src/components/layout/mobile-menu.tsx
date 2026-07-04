@@ -45,7 +45,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         role="dialog"
         aria-modal={isOpen ? "true" : undefined}
         aria-label="Mobile navigation menu"
-        inert={!isOpen}
+        inert={(!isOpen ? "true" : undefined) as unknown as boolean}
         className={cn(
           "fixed top-0 right-0 bottom-0 z-50 w-72 bg-background border-l border-border shadow-2xl transition-transform duration-300",
           isOpen ? "translate-x-0" : "translate-x-full"
