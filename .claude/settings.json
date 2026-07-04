@@ -5,7 +5,9 @@
       "PowerShell($configPath = \"$env:APPDATA\\\\supabase\"; if \\(Test-Path $configPath\\) { Get-ChildItem $configPath -Recurse | Select-Object FullName } else { \"No Supabase config found at $configPath\" })",
       "PowerShell(node --version)",
       "PowerShell(Get-Process -Name \"node\" -ErrorAction SilentlyContinue)",
-      "PowerShell(Stop-Process -Force -ErrorAction SilentlyContinue)"
+      "PowerShell(Stop-Process -Force -ErrorAction SilentlyContinue)",
+      "Bash(npm test *)",
+      "Bash(git add *)"
     ]
   }
 }
