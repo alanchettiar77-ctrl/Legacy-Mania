@@ -2,6 +2,12 @@
 
 Pending and future work. AI Developer: check this before every session.
 
+> **In progress (2026-07-05):** The FAQ system (this file's items below) is fully implemented and
+> passed final review, but is sitting on an unmerged worktree branch (`worktree-faq-system` at
+> `.claude/worktrees/faq-system`) — paused before the merge/PR decision. Resume by asking to finish
+> the FAQ system branch. See `update.md`'s v0.6.0 entry for full detail, including one unrelated
+> follow-up item it surfaced: `/api/admin/analytics` has no admin auth guard.
+
 ---
 
 ## 🔴 Priority 1 — Required Before Launch
@@ -46,7 +52,7 @@ Pending and future work. AI Developer: check this before every session.
 
 - [x] **Soft-delete products** — Admin products table now has toggle visibility + remove (sets `is_active = false`)
 - [x] **JSON-LD structured data** — Product pages now emit `Product` schema with price, availability, seller
-- [x] **FAQ page** — `/faq` with 12 Q&As, accordion-style
+- [x] **FAQ page** — `/faq`, now database-driven (`faqs` table) instead of hardcoded, 12 seeded Q&As, Radix accordion
 - [x] **Admin FAQ management** — `/admin/faqs` page: add/edit/reorder/hide/delete FAQs against the `faqs` table via `/api/admin/faqs*` routes
 - [x] **Shipping policy** — `/shipping-policy` with full delivery info
 - [x] **Return policy** — `/return-policy` with eligibility, process, refund timeline

@@ -209,11 +209,24 @@ Feature Addition — Database-Backed FAQ System
 
 ### Bugs Fixed / Notes
 - The admin FAQ E2E test is restricted to the desktop (chromium) Playwright project — the site-wide fixed WhatsApp contact widget overlaps the FAQ table's row action buttons on the narrow Pixel 5 mobile viewport used by the "mobile" project, causing spurious click interception unrelated to the feature itself.
+- **Critical, found in final review:** `/admin/faqs` read via the session-scoped Supabase client, which is RLS-enforced — the `faqs` table's only RLS policy allows reading active rows only, so hiding a FAQ made it vanish from the admin table on reload (no way to re-activate/edit/delete it afterward). Fixed by reading via `createAdminClient()` instead.
+- **Deeper bug found while fixing the above:** `createAdminClient()` itself (shared helper in `src/lib/supabase/server.ts`, also used by `/admin/users` and `/api/admin/analytics`) was silently broken — it wired the request's session cookies into the service-role client, and `supabase-js` prefers a discovered session's own access token over the service-role key, so it was never actually bypassing RLS when an admin was logged in (which is always). Fixed by no longer passing cookies into that client at all, guaranteeing the service-role key is always used. Verified against the installed `supabase-js` source and confirmed the other two callers are unaffected (both do plain full-table admin reads, which this fix makes more reliable, not less).
+- Reorder (`move()` in the admin table) now calls `router.refresh()` on a partial `Promise.all` failure so the UI can't silently diverge from the database.
+- FAQ `question`/`answer` now strip control characters (per the original design spec) via a Zod transform.
+- Public `/faq` page's JSON-LD now escapes `<` to prevent a script-tag breakout if an admin-authored answer ever contained `</script>`.
+- Added a regression test for the cart drawer's `inert`/`aria-modal` behavior (mirroring the one already added for the mobile menu).
 
 ### Environment
 - `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` set in `.env.local` for a real admin account, enabling the admin E2E test to log in for real
 
+### Status of This Work
+Implemented via subagent-driven development in an isolated worktree (`.claude/worktrees/faq-system`, branch `worktree-faq-system`) — **not yet merged to `master`**. All 10 plan tasks complete and individually reviewed; a final whole-branch review (2 rounds) found and fixed one Critical bug (above) plus minor items, and gave a final "ready to merge" verdict. Paused here for the day before executing the merge/PR decision — resume by asking to finish the FAQ system branch.
+
+**One pre-existing, unrelated finding surfaced during the final review (not fixed, flagged as a follow-up):** `/api/admin/analytics` has no `requireAdmin()` guard and no middleware coverage (unlike every `/api/admin/faqs*` route), so it's technically reachable without authentication. Not caused by this branch; worth a separate look.
+
 ### Next Steps
+- Decide how to land the FAQ system branch: merge locally, push + PR, or keep as-is (ask to resume `finishing-a-development-branch`)
+- Consider closing the unguarded `/api/admin/analytics` route (separate from this feature)
 - Confirm uncommitted `supabase/migrations/001_initial_schema.sql` changes are applied to the live Supabase project, then commit
 - Product image lightbox on product detail page
 - Price range filter in catalog
