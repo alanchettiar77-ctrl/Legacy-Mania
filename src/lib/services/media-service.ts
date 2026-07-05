@@ -6,8 +6,9 @@ const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 2 * 1024 * 1024;
 
 export const MEDIA_NAMESPACES = {
-  banners: { bucket: "banners", recommendedWidth: 728, recommendedHeight: 90 },
-  products: { bucket: "products", recommendedWidth: null, recommendedHeight: null },
+  banners: { bucket: "banners", recommendedWidth: 728, recommendedHeight: 90, public: true },
+  products: { bucket: "products", recommendedWidth: null, recommendedHeight: null, public: true },
+  payments: { bucket: "payments", recommendedWidth: null, recommendedHeight: null, public: false },
 } as const;
 
 export type MediaNamespace = keyof typeof MEDIA_NAMESPACES;
@@ -48,7 +49,7 @@ export async function validateFile(
 
 export interface UploadResult {
   path: string;
-  publicUrl: string;
+  publicUrl: string | null;
 }
 
 function extensionForMimeType(mimeType: string): string {
@@ -72,6 +73,10 @@ export async function uploadMedia(
   });
   if (error) throw new Error(`Upload failed: ${error.message}`);
 
+  if (!config.public) {
+    return { path, publicUrl: null };
+  }
+
   const { data } = supabase.storage.from(config.bucket).getPublicUrl(path);
   return { path, publicUrl: data.publicUrl };
 }
@@ -93,4 +98,20 @@ export async function replaceMedia(
     await deleteMedia(oldPath, namespace);
   }
   return result;
+}
+
+export async function getSignedMediaUrl(
+  path: string,
+  namespace: MediaNamespace,
+  expiresInSeconds = 3600
+): Promise<string> {
+  const config = MEDIA_NAMESPACES[namespace];
+  const supabase = await createAdminClient();
+  const { data, error } = await supabase.storage
+    .from(config.bucket)
+    .createSignedUrl(path, expiresInSeconds);
+  if (error || !data) {
+    throw new Error(`Failed to create signed URL: ${error?.message ?? "unknown error"}`);
+  }
+  return data.signedUrl;
 }

@@ -1,10 +1,12 @@
 const mockUpload = jest.fn();
 const mockRemove = jest.fn();
 const mockGetPublicUrl = jest.fn();
+const mockCreateSignedUrl = jest.fn();
 const mockFrom = jest.fn(() => ({
   upload: mockUpload,
   remove: mockRemove,
   getPublicUrl: mockGetPublicUrl,
+  createSignedUrl: mockCreateSignedUrl,
 }));
 
 jest.mock("@/lib/supabase/server", () => ({
@@ -16,6 +18,7 @@ import {
   uploadMedia,
   deleteMedia,
   replaceMedia,
+  getSignedMediaUrl,
 } from "@/lib/services/media-service";
 
 // A real 1x1 transparent PNG, used to exercise sharp's actual dimension detection.
@@ -115,5 +118,40 @@ describe("replaceMedia", () => {
     await replaceMedia(ONE_BY_ONE_PNG, "image/png", "banners", null);
 
     expect(mockRemove).not.toHaveBeenCalled();
+  });
+});
+
+describe("uploadMedia with a private namespace", () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it("does not call getPublicUrl for the payments namespace and returns publicUrl: null", async () => {
+    mockUpload.mockResolvedValue({ error: null });
+
+    const result = await uploadMedia(ONE_BY_ONE_PNG, "image/png", "payments");
+
+    expect(mockFrom).toHaveBeenCalledWith("payments");
+    expect(mockGetPublicUrl).not.toHaveBeenCalled();
+    expect(result.publicUrl).toBeNull();
+    expect(result.path).toMatch(/^payments\/.+\.png$/);
+  });
+});
+
+describe("getSignedMediaUrl", () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it("returns a signed URL for the given path and namespace", async () => {
+    mockCreateSignedUrl.mockResolvedValue({ data: { signedUrl: "https://example.com/signed" }, error: null });
+
+    const url = await getSignedMediaUrl("payments/x.png", "payments");
+
+    expect(mockFrom).toHaveBeenCalledWith("payments");
+    expect(mockCreateSignedUrl).toHaveBeenCalledWith("payments/x.png", 3600);
+    expect(url).toBe("https://example.com/signed");
+  });
+
+  it("throws when signed URL creation fails", async () => {
+    mockCreateSignedUrl.mockResolvedValue({ data: null, error: { message: "not found" } });
+
+    await expect(getSignedMediaUrl("payments/missing.png", "payments")).rejects.toThrow(/not found/);
   });
 });
