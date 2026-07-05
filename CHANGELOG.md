@@ -212,13 +212,37 @@ All notable changes are recorded here.
 
 ---
 
-## Upcoming (v0.5.0)
+## [0.7.0] — 2026-07-06 — Phase 0 Foundations
 
-- JSON-LD structured data on product pages
-- Soft-delete products from admin
-- Catalog pagination
-- OG image
-- Policy pages (FAQ, Shipping, Returns, Privacy, Terms)
-- Contact page
+### Added — Database
+
+- `supabase/migrations/001_initial_schema.sql` — Added `banners` and `contact_messages` tables; added `rarity`, `condition`, and `reserved_quantity` columns to `products` (migration written, not yet applied to the live Supabase project — pending manual dashboard step)
+
+### Added — Services & Infrastructure
+
+- `src/lib/rate-limit.ts` — Shared in-memory rate limiter used across API routes
+- `src/lib/services/audit-service.ts` (+ repository) — `AuditService` gives the previously-unused `audit_logs` table its first real writer
+- `src/lib/services/media-service.ts` — Centralized file upload service with validation via `sharp`
+- `src/app/api/media/upload/route.ts` — `POST /api/media/upload` endpoint backed by `MediaService`
+- `src/app/api/media/[...path]/route.ts` — `DELETE /api/media/[...path]` endpoint backed by `MediaService`
+- `src/lib/services/catalog-service.ts` + `src/lib/repositories/category-repository.ts` — `CatalogService` for category tree/breadcrumb resolution
+- `src/app/api/categories/route.ts` — Public `GET /api/categories`
+- `src/app/api/categories/tree/route.ts` — Public `GET /api/categories/tree`
+
+### Changed
+
+- `src/components/admin/product-form.tsx` — Migrated to upload product images via `POST /api/media/upload` instead of calling Supabase Storage directly
+
+### Added — Documentation
+
+- `API.md` — API route reference
+- `DATABASE.md` — Database schema reference
+- `ROADMAP.md` — Product roadmap
+- `AI_MEMORY.md` — AI developer context/memory notes
+
+### Verified
+
+- Full test suite: 18 suites / 79 tests passing
+- `npm run type-check`: no errors
 
 See `TASKS.md` for the full list.

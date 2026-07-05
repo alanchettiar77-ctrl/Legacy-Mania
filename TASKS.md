@@ -94,6 +94,18 @@ Pending and future work. AI Developer: check this before every session.
 
 ---
 
+## ⚪ Phase 0 — Foundations
+
+- [x] **Database schema additions** — `banners` and `contact_messages` tables; `rarity`, `condition`, `reserved_quantity` columns on `products` (migration written; not yet applied to the live Supabase project — manual dashboard step pending)
+- [x] **Shared rate limiter** — `src/lib/rate-limit.ts`
+- [x] **AuditService** — `src/lib/services/audit-service.ts` + repository; first real writer for the previously-unused `audit_logs` table
+- [x] **MediaService** — `src/lib/services/media-service.ts` centralizes file uploads with `sharp` validation; new `POST /api/media/upload` and `DELETE /api/media/[...path]` routes
+- [x] **Product form migrated to MediaService** — `product-form.tsx` now uploads via the new endpoint instead of calling Supabase Storage directly
+- [x] **CatalogService + categories API** — `src/lib/services/catalog-service.ts` + `category-repository.ts` for category tree/breadcrumb resolution; public `GET /api/categories` and `GET /api/categories/tree` routes
+- [x] **New docs** — `API.md`, `DATABASE.md`, `ROADMAP.md`, `AI_MEMORY.md`
+
+---
+
 ## ✅ Completed
 
 - [x] `/catalog/[slug]` — Category browse page with filtered products
