@@ -65,4 +65,16 @@ describe("DELETE /api/media/:path", () => {
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
   });
+
+  it("returns 500 with a structured error when deleteMedia throws", async () => {
+    mockRequireAdmin.mockResolvedValue({ ok: true, userId: "admin-1" });
+    mockDeleteMedia.mockRejectedValue(new Error("Storage bucket unavailable"));
+
+    const { req, params } = makeRequest(["banners", "x.png"]);
+    const response = await DELETE(req, { params });
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body).toEqual({ error: "Storage bucket unavailable" });
+  });
 });

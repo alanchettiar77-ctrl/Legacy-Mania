@@ -111,4 +111,17 @@ describe("POST /api/media/upload", () => {
     expect(body.publicUrl).toBe("https://example.com/x.png");
     expect(body.dimensionWarning).toBeNull();
   });
+
+  it("returns 500 with a structured error when uploadMedia throws", async () => {
+    mockRequireAdmin.mockResolvedValue({ ok: true, userId: "admin-1" });
+    mockCheckRateLimit.mockReturnValue({ allowed: true, remaining: 10, resetAt: Date.now() + 1000 });
+    mockValidateFile.mockResolvedValue({ valid: true, dimensionWarning: undefined });
+    mockUploadMedia.mockRejectedValue(new Error("Storage bucket unavailable"));
+
+    const response = await POST(makeUploadRequest("data", "banners"));
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body).toEqual({ error: "Storage bucket unavailable" });
+  });
 });

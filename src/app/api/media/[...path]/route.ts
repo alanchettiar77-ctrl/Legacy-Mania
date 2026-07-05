@@ -23,6 +23,11 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "A file path is required" }, { status: 400 });
   }
 
-  await deleteMedia(path.join("/"), namespace);
-  return NextResponse.json({ success: true });
+  try {
+    await deleteMedia(path.join("/"), namespace);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Delete failed";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

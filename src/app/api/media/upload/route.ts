@@ -29,14 +29,19 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const mimeType = file.type;
 
-  const validation = await validateFile(buffer, mimeType, namespaceRaw);
-  if (!validation.valid) {
-    return NextResponse.json({ error: validation.error }, { status: 400 });
-  }
+  try {
+    const validation = await validateFile(buffer, mimeType, namespaceRaw);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
 
-  const result = await uploadMedia(buffer, mimeType, namespaceRaw);
-  return NextResponse.json(
-    { ...result, dimensionWarning: validation.dimensionWarning ?? null },
-    { status: 201 }
-  );
+    const result = await uploadMedia(buffer, mimeType, namespaceRaw);
+    return NextResponse.json(
+      { ...result, dimensionWarning: validation.dimensionWarning ?? null },
+      { status: 201 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Upload failed";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
