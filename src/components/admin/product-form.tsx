@@ -75,20 +75,20 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
     if (files.length === 0) return;
     setUploading(true);
     try {
-      const supabase = createClient();
       const urls: string[] = [];
       for (const file of files) {
-        const ext = file.name.split(".").pop();
-        const path = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabase.storage.from("products").upload(path, file);
-        if (error) throw error;
-        const { data: { publicUrl } } = supabase.storage.from("products").getPublicUrl(path);
-        urls.push(publicUrl);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("namespace", "products");
+        const res = await fetch("/api/media/upload", { method: "POST", body: formData });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || "Upload failed");
+        urls.push(body.publicUrl);
       }
       setImages((prev) => [...prev, ...urls]);
       toast.success(`${urls.length} image(s) uploaded`);
-    } catch {
-      toast.error("Image upload failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Image upload failed");
     } finally {
       setUploading(false);
     }
@@ -295,12 +295,16 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
                 </div>
               ))}
             </div>
-            <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl p-4 cursor-pointer hover:border-primary/50 transition-colors">
+            <label
+              htmlFor="product-image-upload"
+              className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl p-4 cursor-pointer hover:border-primary/50 transition-colors"
+            >
               <Upload className="w-5 h-5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">
                 {uploading ? "Uploading..." : "Upload Images"}
               </span>
               <input
+                id="product-image-upload"
                 type="file"
                 accept="image/*"
                 multiple
