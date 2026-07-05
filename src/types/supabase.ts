@@ -151,6 +151,65 @@ export type Database = {
         };
         Relationships: [];
       };
+      banners: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          image_url: string;
+          category_id: string;
+          display_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          image_url: string;
+          category_id: string;
+          display_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          title?: string;
+          description?: string | null;
+          image_url?: string;
+          category_id?: string;
+          display_order?: number;
+          is_active?: boolean;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+      contact_messages: {
+        Row: {
+          id: string;
+          name: string;
+          email: string;
+          message: string;
+          status: "new" | "read" | "replied";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          email: string;
+          message: string;
+          status?: "new" | "read" | "replied";
+          created_at?: string;
+        };
+        Update: {
+          status?: "new" | "read" | "replied";
+        };
+        Relationships: [];
+      };
       products: {
         Row: {
           id: string;
@@ -164,6 +223,9 @@ export type Database = {
           series: string | null;
           saga: string | null;
           collection: string | null;
+          rarity: string | null;
+          condition: string | null;
+          reserved_quantity: number;
           stock_quantity: number;
           sku: string | null;
           is_active: boolean;
@@ -187,6 +249,9 @@ export type Database = {
           series?: string | null;
           saga?: string | null;
           collection?: string | null;
+          rarity?: string | null;
+          condition?: string | null;
+          reserved_quantity?: number;
           stock_quantity?: number;
           sku?: string | null;
           is_active?: boolean;
@@ -209,6 +274,9 @@ export type Database = {
           series?: string | null;
           saga?: string | null;
           collection?: string | null;
+          rarity?: string | null;
+          condition?: string | null;
+          reserved_quantity?: number;
           stock_quantity?: number;
           sku?: string | null;
           is_active?: boolean;

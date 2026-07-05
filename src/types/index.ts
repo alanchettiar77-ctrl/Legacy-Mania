@@ -11,6 +11,8 @@ export type Address = Database["public"]["Tables"]["addresses"]["Row"];
 export type WishlistItem = Database["public"]["Tables"]["wishlists"]["Row"];
 export type Setting = Database["public"]["Tables"]["settings"]["Row"];
 export type AuditLog = Database["public"]["Tables"]["audit_logs"]["Row"];
+export type Banner = Database["public"]["Tables"]["banners"]["Row"];
+export type ContactMessage = Database["public"]["Tables"]["contact_messages"]["Row"];
 
 export type CategoryWithChildren = Category & {
   children?: CategoryWithChildren[];
