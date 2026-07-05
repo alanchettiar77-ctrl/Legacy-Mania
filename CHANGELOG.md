@@ -216,7 +216,7 @@ All notable changes are recorded here.
 
 ### Added — Database
 
-- `supabase/migrations/001_initial_schema.sql` — Added `banners` and `contact_messages` tables; added `rarity`, `condition`, and `reserved_quantity` columns to `products` (migration written, not yet applied to the live Supabase project — pending manual dashboard step)
+- `supabase/migrations/003_platform_foundations.sql` — Added `banners` and `contact_messages` tables; added `rarity`, `condition`, and `reserved_quantity` columns to `products` (migration written, not yet applied to the live Supabase project — pending manual dashboard step)
 
 ### Added — Services & Infrastructure
 

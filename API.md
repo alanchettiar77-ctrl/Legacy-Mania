@@ -19,6 +19,7 @@ phases are tracked in `ROADMAP.md`, not documented here until they exist.
 
 | Method | Path | Description |
 |---|---|---|
+| GET | `/api/auth/role` | Get the signed-in user's role for client-side auth gating |
 | PATCH | `/api/account/profile` | Update the signed-in user's profile |
 
 ## Admin (`requireAdmin()` required)
