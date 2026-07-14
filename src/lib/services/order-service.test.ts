@@ -77,4 +77,14 @@ describe("updateStatus", () => {
     expect(mockReleaseReservation).not.toHaveBeenCalled();
     expect(mockConsumeReservation).not.toHaveBeenCalled();
   });
+
+  it("does not persist the status change when the inventory mutation fails", async () => {
+    mockGetOrderById.mockResolvedValue({ id: "o1", status: "payment_verification" });
+    mockGetOrderItemsForOrder.mockResolvedValue([{ product_id: "p1", quantity: 2 }]);
+    mockConsumeReservation.mockRejectedValue(new Error("inventory RPC failed"));
+
+    await expect(updateStatus("o1", "confirmed")).rejects.toThrow("inventory RPC failed");
+
+    expect(mockUpdateOrderStatusInDb).not.toHaveBeenCalled();
+  });
 });

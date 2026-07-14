@@ -32,8 +32,6 @@ export async function updateStatus(orderId: string, newStatus: OrderStatus): Pro
     );
   }
 
-  await updateOrderStatusInDb(orderId, newStatus);
-
   if (newStatus === "confirmed") {
     const items = await getOrderItemsForOrder(orderId);
     const withProduct = items.filter(
@@ -47,4 +45,6 @@ export async function updateStatus(orderId: string, newStatus: OrderStatus): Pro
     );
     await releaseReservation(withProduct.map((i) => ({ productId: i.product_id, quantity: i.quantity })));
   }
+
+  await updateOrderStatusInDb(orderId, newStatus);
 }
