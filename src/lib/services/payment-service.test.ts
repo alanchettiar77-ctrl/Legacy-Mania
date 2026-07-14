@@ -36,6 +36,15 @@ describe("verifyPayment", () => {
     expect(mockUpdatePaymentStatus).toHaveBeenCalledWith("pay-1", "verified", "admin-1");
     expect(mockUpdateOrderStatus).toHaveBeenCalledWith("order-1", "confirmed");
   });
+
+  it("does not mark the payment verified when the order transition fails", async () => {
+    mockGetPaymentById.mockResolvedValue({ id: "pay-1", order_id: "order-1", screenshot_url: null });
+    mockUpdateOrderStatus.mockRejectedValue(new Error("invalid transition"));
+
+    await expect(verifyPayment("pay-1", "admin-1")).rejects.toThrow("invalid transition");
+
+    expect(mockUpdatePaymentStatus).not.toHaveBeenCalled();
+  });
 });
 
 describe("rejectPayment", () => {
@@ -50,6 +59,15 @@ describe("rejectPayment", () => {
 
     expect(mockUpdatePaymentStatus).toHaveBeenCalledWith("pay-1", "rejected", "admin-1");
     expect(mockUpdateOrderStatus).toHaveBeenCalledWith("order-1", "cancelled");
+  });
+
+  it("does not mark the payment rejected when the order transition fails", async () => {
+    mockGetPaymentById.mockResolvedValue({ id: "pay-1", order_id: "order-1", screenshot_url: null });
+    mockUpdateOrderStatus.mockRejectedValue(new Error("invalid transition"));
+
+    await expect(rejectPayment("pay-1", "admin-1")).rejects.toThrow("invalid transition");
+
+    expect(mockUpdatePaymentStatus).not.toHaveBeenCalled();
   });
 });
 
