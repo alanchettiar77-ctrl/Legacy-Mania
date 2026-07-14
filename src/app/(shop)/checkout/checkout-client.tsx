@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { createClient } from "@/lib/supabase/client";
-import { formatCurrency, INDIAN_STATES, generateOrderNumber, getWhatsAppUrl, getOrderWhatsAppMessage } from "@/lib/utils";
+import { formatCurrency, INDIAN_STATES, getWhatsAppUrl, getOrderWhatsAppMessage } from "@/lib/utils";
 import { toast } from "sonner";
 
 const MIN_QTY = 5;
@@ -76,9 +76,8 @@ export default function CheckoutClient() {
   const onSubmitDetails = async (data: CheckoutFormData) => {
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
 
-      // Fetch UPI QR from settings
+      // Fetch UPI QR from settings (read-only, unchanged — this is a public setting)
       const { data: settings } = await supabase
         .from("settings")
         .select("value")
@@ -86,57 +85,22 @@ export default function CheckoutClient() {
         .single();
       if (settings?.value) setUpiQr(settings.value as string);
 
-      const orderNum = generateOrderNumber();
-      const { data: order, error } = await supabase
-        .from("orders")
-        .insert({
-          order_number: orderNum,
-          user_id: user?.id || null,
-          guest_email: !user ? data.email : null,
-          status: "pending",
-          subtotal: price,
-          shipping_cost: 0,
-          total: price,
-          shipping_name: data.name,
-          shipping_email: data.email,
-          shipping_phone: data.phone,
-          shipping_address: data.address,
-          shipping_city: data.city,
-          shipping_state: data.state,
-          shipping_pincode: data.pincode,
-          notes: data.notes || null,
-        })
-        .select()
-        .single();
-
-      if (error || !order) throw error;
-
-      // Insert order items
-      await supabase.from("order_items").insert(
-        items.map((item) => ({
-          order_id: order.id,
-          product_id: item.productId,
-          product_name: item.name,
-          product_image: item.image,
-          quantity: item.quantity,
-          unit_price: item.price,
-          total_price: item.price * item.quantity,
-        }))
-      );
-
-      // Create payment record
-      await supabase.from("payments").insert({
-        order_id: order.id,
-        amount: price,
-        payment_method: "upi",
-        status: "pending",
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          ...data,
+        }),
       });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || "Failed to create order");
 
-      setOrderId(order.id);
-      setOrderNumber(orderNum);
+      setOrderId(body.orderId);
+      setOrderNumber(body.orderNumber);
       setStep("payment");
-    } catch {
-      toast.error("Failed to create order. Please try again.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create order. Please try again.");
     }
   };
 
@@ -144,29 +108,20 @@ export default function CheckoutClient() {
     if (!screenshot || !orderId) return;
     setUploading(true);
     try {
-      const supabase = createClient();
-      const ext = screenshot.name.split(".").pop();
-      const path = `payment-screenshots/${orderId}.${ext}`;
+      const formData = new FormData();
+      formData.append("file", screenshot);
 
-      const { error: uploadError } = await supabase.storage
-        .from("payments")
-        .upload(path, screenshot, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage.from("payments").getPublicUrl(path);
-
-      await supabase.from("payments").update({
-        screenshot_url: publicUrl,
-        status: "pending",
-      }).eq("order_id", orderId);
-
-      await supabase.from("orders").update({ status: "payment_verification" }).eq("id", orderId);
+      const res = await fetch(`/api/checkout/${orderId}/screenshot`, {
+        method: "POST",
+        body: formData,
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || "Failed to upload screenshot");
 
       clearCart();
       setStep("confirmation");
-    } catch {
-      toast.error("Failed to upload screenshot. Please try again.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload screenshot. Please try again.");
     } finally {
       setUploading(false);
     }
