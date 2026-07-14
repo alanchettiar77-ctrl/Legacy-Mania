@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { validateFile, uploadMedia } from "@/lib/services/media-service";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { updateStatus } from "@/lib/services/order-service";
 
 type RouteParams = { params: Promise<{ orderId: string }> };
 
@@ -38,11 +39,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       .eq("order_id", orderId);
     if (paymentError) throw new Error(paymentError.message);
 
-    const { error: orderError } = await db
-      .from("orders")
-      .update({ status: "payment_verification" })
-      .eq("id", orderId);
-    if (orderError) throw new Error(orderError.message);
+    await updateStatus(orderId, "payment_verification");
 
     return NextResponse.json({ success: true });
   } catch (error) {
