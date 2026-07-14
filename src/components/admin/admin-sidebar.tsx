@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Package, Tag, ShoppingBag,
+  LayoutDashboard, Package, Tag, ShoppingBag, Wallet,
   Users, BarChart3, Settings, Zap, ChevronRight, Shield, HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/admin/payments", label: "Payments", icon: Wallet },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: Tag },
   { href: "/admin/faqs", label: "FAQs", icon: HelpCircle },
