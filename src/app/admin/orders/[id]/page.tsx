@@ -122,9 +122,7 @@ export default async function AdminOrderDetailPage({
       </div>
 
       {/* Status updater */}
-      <OrderStatusUpdater orderId={order.id} currentStatus={order.status} paymentId={
-        order.payment ? (order.payment as { id: string }).id : null
-      } />
+      <OrderStatusUpdater orderId={order.id} currentStatus={order.status} />
     </div>
   );
 }
