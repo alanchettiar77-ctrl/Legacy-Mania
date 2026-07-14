@@ -25,11 +25,9 @@ jest.mock("@/lib/services/order-service", () => ({
   updateStatus: (...args: unknown[]) => mockUpdateStatus(...args),
 }));
 
-const mockEq = jest.fn();
-const mockUpdate = jest.fn(() => ({ eq: mockEq }));
-const mockFrom = jest.fn(() => ({ update: mockUpdate }));
-jest.mock("@/lib/supabase/server", () => ({
-  createAdminClient: async () => ({ from: mockFrom }),
+const mockUpdateScreenshotUrl = jest.fn();
+jest.mock("@/lib/repositories/payment-repository", () => ({
+  updateScreenshotUrl: (...args: unknown[]) => mockUpdateScreenshotUrl(...args),
 }));
 
 import { NextRequest } from "next/server";
@@ -84,7 +82,7 @@ describe("POST /api/checkout/:orderId/screenshot", () => {
     mockCheckRateLimit.mockReturnValue({ allowed: true, remaining: 10, resetAt: Date.now() + 1000 });
     mockValidateFile.mockResolvedValue({ valid: true });
     mockUploadMedia.mockResolvedValue({ path: "payments/order-1.png", publicUrl: null });
-    mockEq.mockResolvedValue({ error: null });
+    mockUpdateScreenshotUrl.mockResolvedValue(undefined);
     mockUpdateStatus.mockResolvedValue(undefined);
 
     const { req, params } = makeRequest("data");
@@ -92,7 +90,7 @@ describe("POST /api/checkout/:orderId/screenshot", () => {
     const body = await response.json();
 
     expect(mockUploadMedia).toHaveBeenCalledWith(expect.any(Buffer), "image/png", "payments");
-    expect(mockFrom).toHaveBeenCalledWith("payments");
+    expect(mockUpdateScreenshotUrl).toHaveBeenCalledWith("order-1", "payments/order-1.png");
     expect(mockUpdateStatus).toHaveBeenCalledWith("order-1", "payment_verification");
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
@@ -102,7 +100,7 @@ describe("POST /api/checkout/:orderId/screenshot", () => {
     mockCheckRateLimit.mockReturnValue({ allowed: true, remaining: 10, resetAt: Date.now() + 1000 });
     mockValidateFile.mockResolvedValue({ valid: true });
     mockUploadMedia.mockResolvedValue({ path: "payments/order-1.png", publicUrl: null });
-    mockEq.mockResolvedValue({ error: { message: "db down" } });
+    mockUpdateScreenshotUrl.mockRejectedValue(new Error("Failed to update payment screenshot: 500"));
     mockUpdateStatus.mockResolvedValue(undefined);
 
     const { req, params } = makeRequest("data");
@@ -115,7 +113,7 @@ describe("POST /api/checkout/:orderId/screenshot", () => {
     mockCheckRateLimit.mockReturnValue({ allowed: true, remaining: 10, resetAt: Date.now() + 1000 });
     mockValidateFile.mockResolvedValue({ valid: true });
     mockUploadMedia.mockResolvedValue({ path: "payments/order-1.png", publicUrl: null });
-    mockEq.mockResolvedValue({ error: null });
+    mockUpdateScreenshotUrl.mockResolvedValue(undefined);
     mockUpdateStatus.mockRejectedValue(new Error("Cannot transition from shipped to payment_verification"));
 
     const { req, params } = makeRequest("data");

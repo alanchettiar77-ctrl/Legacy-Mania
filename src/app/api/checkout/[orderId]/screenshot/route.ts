@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/server";
 import { validateFile, uploadMedia } from "@/lib/services/media-service";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { updateStatus } from "@/lib/services/order-service";
+import { updateScreenshotUrl } from "@/lib/repositories/payment-repository";
 
 type RouteParams = { params: Promise<{ orderId: string }> };
 
@@ -29,15 +29,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const result = await uploadMedia(buffer, mimeType, "payments");
 
-    const supabase = await createAdminClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any;
-
-    const { error: paymentError } = await db
-      .from("payments")
-      .update({ screenshot_url: result.path })
-      .eq("order_id", orderId);
-    if (paymentError) throw new Error(paymentError.message);
+    await updateScreenshotUrl(orderId, result.path);
 
     await updateStatus(orderId, "payment_verification");
 

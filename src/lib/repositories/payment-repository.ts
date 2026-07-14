@@ -34,3 +34,17 @@ export async function updatePaymentStatus(
   });
   if (!res.ok) throw new Error(`Failed to update payment status: ${res.status}`);
 }
+
+export async function updateScreenshotUrl(orderId: string, screenshotPath: string): Promise<void> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/payments?order_id=eq.${encodeURIComponent(orderId)}`, {
+    method: "PATCH",
+    headers: {
+      apikey: SERVICE_KEY,
+      Authorization: `Bearer ${SERVICE_KEY}`,
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify({ screenshot_url: screenshotPath }),
+  });
+  if (!res.ok) throw new Error(`Failed to update payment screenshot: ${res.status}`);
+}

@@ -6,6 +6,11 @@ jest.mock("@/lib/repositories/payment-repository", () => ({
   updatePaymentStatus: (...args: unknown[]) => mockUpdatePaymentStatus(...args),
 }));
 
+const mockGetOrderById = jest.fn();
+jest.mock("@/lib/repositories/order-repository", () => ({
+  getOrderById: (...args: unknown[]) => mockGetOrderById(...args),
+}));
+
 const mockUpdateOrderStatus = jest.fn();
 jest.mock("@/lib/services/order-service", () => ({
   updateStatus: (...args: unknown[]) => mockUpdateOrderStatus(...args),
@@ -28,6 +33,7 @@ describe("verifyPayment", () => {
 
   it("marks the payment verified and confirms the order", async () => {
     mockGetPaymentById.mockResolvedValue({ id: "pay-1", order_id: "order-1", screenshot_url: null });
+    mockGetOrderById.mockResolvedValue({ id: "order-1", status: "payment_verification" });
     mockUpdatePaymentStatus.mockResolvedValue(undefined);
     mockUpdateOrderStatus.mockResolvedValue(undefined);
 
@@ -39,11 +45,23 @@ describe("verifyPayment", () => {
 
   it("does not mark the payment verified when the order transition fails", async () => {
     mockGetPaymentById.mockResolvedValue({ id: "pay-1", order_id: "order-1", screenshot_url: null });
+    mockGetOrderById.mockResolvedValue({ id: "order-1", status: "payment_verification" });
     mockUpdateOrderStatus.mockRejectedValue(new Error("invalid transition"));
 
     await expect(verifyPayment("pay-1", "admin-1")).rejects.toThrow("invalid transition");
 
     expect(mockUpdatePaymentStatus).not.toHaveBeenCalled();
+  });
+
+  it("skips the order transition but still verifies the payment when the order is already confirmed (idempotent retry)", async () => {
+    mockGetPaymentById.mockResolvedValue({ id: "pay-1", order_id: "order-1", screenshot_url: null });
+    mockGetOrderById.mockResolvedValue({ id: "order-1", status: "confirmed" });
+    mockUpdatePaymentStatus.mockResolvedValue(undefined);
+
+    await verifyPayment("pay-1", "admin-1");
+
+    expect(mockUpdateOrderStatus).not.toHaveBeenCalled();
+    expect(mockUpdatePaymentStatus).toHaveBeenCalledWith("pay-1", "verified", "admin-1");
   });
 });
 
@@ -52,6 +70,7 @@ describe("rejectPayment", () => {
 
   it("marks the payment rejected and cancels the order", async () => {
     mockGetPaymentById.mockResolvedValue({ id: "pay-1", order_id: "order-1", screenshot_url: null });
+    mockGetOrderById.mockResolvedValue({ id: "order-1", status: "payment_verification" });
     mockUpdatePaymentStatus.mockResolvedValue(undefined);
     mockUpdateOrderStatus.mockResolvedValue(undefined);
 
@@ -63,11 +82,23 @@ describe("rejectPayment", () => {
 
   it("does not mark the payment rejected when the order transition fails", async () => {
     mockGetPaymentById.mockResolvedValue({ id: "pay-1", order_id: "order-1", screenshot_url: null });
+    mockGetOrderById.mockResolvedValue({ id: "order-1", status: "payment_verification" });
     mockUpdateOrderStatus.mockRejectedValue(new Error("invalid transition"));
 
     await expect(rejectPayment("pay-1", "admin-1")).rejects.toThrow("invalid transition");
 
     expect(mockUpdatePaymentStatus).not.toHaveBeenCalled();
+  });
+
+  it("skips the order transition but still rejects the payment when the order is already cancelled (idempotent retry)", async () => {
+    mockGetPaymentById.mockResolvedValue({ id: "pay-1", order_id: "order-1", screenshot_url: null });
+    mockGetOrderById.mockResolvedValue({ id: "order-1", status: "cancelled" });
+    mockUpdatePaymentStatus.mockResolvedValue(undefined);
+
+    await rejectPayment("pay-1", "admin-1");
+
+    expect(mockUpdateOrderStatus).not.toHaveBeenCalled();
+    expect(mockUpdatePaymentStatus).toHaveBeenCalledWith("pay-1", "rejected", "admin-1");
   });
 });
 
