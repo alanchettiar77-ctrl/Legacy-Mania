@@ -2,11 +2,9 @@
 
 Pending and future work. AI Developer: check this before every session.
 
-> **In progress (2026-07-05):** The FAQ system (this file's items below) is fully implemented and
-> passed final review, but is sitting on an unmerged worktree branch (`worktree-faq-system` at
-> `.claude/worktrees/faq-system`) — paused before the merge/PR decision. Resume by asking to finish
-> the FAQ system branch. See `update.md`'s v0.6.0 entry for full detail, including one unrelated
-> follow-up item it surfaced: `/api/admin/analytics` has no admin auth guard.
+> **Note:** The FAQ system (previously tracked here as in-progress on an unmerged worktree) has
+> since been merged to master. One follow-up item it surfaced remains open:
+> `/api/admin/analytics` has no admin auth guard.
 
 ---
 
@@ -96,13 +94,34 @@ Pending and future work. AI Developer: check this before every session.
 
 ## ⚪ Phase 0 — Foundations
 
-- [x] **Database schema additions** — `banners` and `contact_messages` tables; `rarity`, `condition`, `reserved_quantity` columns on `products` (migration written; not yet applied to the live Supabase project — manual dashboard step pending)
+- [x] **Database schema additions** — `banners` and `contact_messages` tables; `rarity`, `condition`, `reserved_quantity` columns on `products` (migration applied to the live Supabase project during Phase 1 verification)
 - [x] **Shared rate limiter** — `src/lib/rate-limit.ts`
 - [x] **AuditService** — `src/lib/services/audit-service.ts` + repository; first real writer for the previously-unused `audit_logs` table
 - [x] **MediaService** — `src/lib/services/media-service.ts` centralizes file uploads with `sharp` validation; new `POST /api/media/upload` and `DELETE /api/media/[...path]` routes
 - [x] **Product form migrated to MediaService** — `product-form.tsx` now uploads via the new endpoint instead of calling Supabase Storage directly
 - [x] **CatalogService + categories API** — `src/lib/services/catalog-service.ts` + `category-repository.ts` for category tree/breadcrumb resolution; public `GET /api/categories` and `GET /api/categories/tree` routes
 - [x] **New docs** — `API.md`, `DATABASE.md`, `ROADMAP.md`, `AI_MEMORY.md`
+
+---
+
+## ⚪ Phase 1 — Checkout/Order/Payment/Inventory Integrity
+
+- [x] **RLS tightening** — Removed wide-open `WITH CHECK (TRUE)`/`USING (TRUE)` insert/update policies on `orders`/`order_items`/`payments`; all writes now go through service-role-backed API routes
+- [x] **`create_order`/`consume_reservation`/`release_reservation` RPCs** — Atomic order creation with row locks, server-derived pricing, and stock reservation (`supabase/migrations/004_checkout_integrity.sql`)
+- [x] **Reservation-expiry cron** — Hourly `pg_cron` job auto-cancels stale `pending`/`payment_verification` orders and releases their reservations
+- [x] **`MediaService` payments namespace + signed URLs** — Private `payments` storage bucket, `getSignedMediaUrl()` for screenshot access (fixes previously-broken `getPublicUrl()` call on a private bucket)
+- [x] **`InventoryService`** — `consumeReservation`/`releaseReservation` wrapping the new RPCs
+- [x] **`OrderService`** — Guarded status state machine (`ALLOWED_TRANSITIONS`); inventory mutation now runs and succeeds before the DB status write is persisted, so a partial inventory failure can't leave an order stuck in a corrupted, unretryable state
+- [x] **`PaymentService`** — `verifyPayment`/`rejectPayment`/`getPaymentScreenshotUrl`; order transition now runs before the payment status write, for the same reason as above
+- [x] **`CheckoutService`** — Server-side price truth (RPC re-derives prices from `products`, never trusts client input) + 5-card minimum enforced server-side
+- [x] **`POST /api/checkout`** — Guest-friendly order creation, rate-limited
+- [x] **`POST /api/checkout/:orderId/screenshot`** — Payment screenshot upload; order status change now routed through `OrderService.updateStatus` instead of a raw write, closing a state-regression hole where a guest could resubmit a screenshot and silently force an already-progressed order backward
+- [x] **`PATCH /api/admin/orders/:id/status`** — Admin-guarded status transitions (409 on invalid transition)
+- [x] **Payment verify/reject routes + `/admin/payments` page** — Admin UI to verify/reject payments and view signed screenshot URLs
+- [x] **Migrated `checkout-client.tsx` and `order-status-updater.tsx`** — Both now call the new server-side APIs; "Confirmed" removed from the admin status dropdown (reachable only via Payments page Verify)
+- [x] **Removed dead code** — `/api/orders` (superseded), duplicate `auth/redirect` route, empty `/api/setup`
+- [x] **Fixed `profiles` RLS infinite recursion** (discovered during live verification, unrelated to this phase's plan but blocking it) — `public.is_admin()` `SECURITY DEFINER` helper replaces 9 self-referencing `EXISTS (SELECT ... FROM profiles ...)` policy checks that were causing Postgres error 42P17 on any query embedding an admin-gated table (this was silently breaking the product detail page's category join) — `supabase/migrations/005_fix_profiles_rls_recursion.sql`
+- [x] **Live verification** — Full checkout → screenshot → admin-verify flow run against production Supabase with a real product: order created with correct server-computed price, `reserved_quantity` incremented on order, `stock_quantity` decremented and `reserved_quantity` released on verify
 
 ---
 

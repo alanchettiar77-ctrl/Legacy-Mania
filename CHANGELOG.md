@@ -216,7 +216,7 @@ All notable changes are recorded here.
 
 ### Added — Database
 
-- `supabase/migrations/003_platform_foundations.sql` — Added `banners` and `contact_messages` tables; added `rarity`, `condition`, and `reserved_quantity` columns to `products` (migration written, not yet applied to the live Supabase project — pending manual dashboard step)
+- `supabase/migrations/003_platform_foundations.sql` — Added `banners` and `contact_messages` tables; added `rarity`, `condition`, and `reserved_quantity` columns to `products` (applied to the live Supabase project during Phase 1 verification)
 
 ### Added — Services & Infrastructure
 
@@ -244,5 +244,38 @@ All notable changes are recorded here.
 
 - Full test suite: 18 suites / 79 tests passing
 - `npm run type-check`: no errors
+
+See `TASKS.md` for the full list.
+
+---
+
+## [0.8.0] — 2026-07-14 — Phase 1: Checkout/Order/Payment/Inventory Integrity
+
+### Fixed — Security & Data Integrity
+
+- Checkout now creates orders entirely server-side via a new atomic `create_order` Postgres RPC, which re-derives every price from the live `products` table — closes the gap where a client could previously submit arbitrary prices/totals directly to the database
+- Order status transitions are now guarded by an explicit state machine (`OrderService`); invalid transitions are rejected with a 409 instead of silently corrupting order state
+- Payment verification/rejection now correctly manages stock reservations end-to-end: `reserved_quantity` increments on order creation and is either consumed (stock decremented) or released depending on the payment outcome — previously reservations were never tracked at all
+- Payment screenshots are now served via signed URLs from a genuinely private Supabase Storage bucket — previously the code called `getPublicUrl()` on a private bucket, which never worked
+- A scheduled `pg_cron` job auto-cancels stale unconfirmed orders and releases their reservations hourly
+- Fixed two write-ordering bugs (found and fixed during review) where a dependent status/payment field was persisted before an operation that could still fail, risking permanently inconsistent state: `OrderService.updateStatus` and `PaymentService.verifyPayment`/`rejectPayment` now perform the risky operation first and only persist the "succeeded" status after
+- Fixed a state-regression hole in the guest screenshot-upload route where resubmitting a screenshot could silently force an already-progressed order backward — the route now goes through the guarded state machine instead of a raw DB write
+- Fixed a pre-existing `profiles` table RLS infinite-recursion bug (discovered during this phase's live verification) that was silently breaking the product detail page and any other query embedding an admin-gated table
+
+### Added
+
+- `InventoryService`, `OrderService`, `PaymentService`, `CheckoutService` — new service layer for checkout/order/payment logic, following the repository → service → route pattern from Phase 0
+- `POST /api/checkout`, `POST /api/checkout/:orderId/screenshot`, `PATCH /api/admin/orders/:id/status`, payment verify/reject routes
+- `/admin/payments` page for admins to verify/reject payments and view screenshots
+
+### Removed
+
+- Dead `/api/orders` route (superseded by `/api/checkout`), duplicate `auth/redirect` route, empty `/api/setup` directory
+
+### Verified
+
+- Full test suite: 29 suites / 133 tests passing
+- `npm run type-check`: no errors
+- Live end-to-end verification against production Supabase: real order created with server-computed pricing, reservation incremented on order, stock decremented and reservation released on admin verify
 
 See `TASKS.md` for the full list.

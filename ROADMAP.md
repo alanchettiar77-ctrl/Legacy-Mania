@@ -5,8 +5,8 @@ This file tracks phase-level progress; day-to-day granular tasks stay in `TASKS.
 
 | Phase | Scope | Status |
 |---|---|---|
-| 0 — Foundations | Banners/contact_messages/products schema, MediaService, AuditService, rate limiter, CatalogService, doc scaffolding | **In progress** |
-| 1 — Checkout/Order/Payment/Inventory integrity | Server-side price truth, guarded order state machine, payment verify/reject, inventory reservation + expiry, remove dead checkout code | Not started |
+| 0 — Foundations | Banners/contact_messages/products schema, MediaService, AuditService, rate limiter, CatalogService, doc scaffolding | Complete |
+| 1 — Checkout/Order/Payment/Inventory integrity | Server-side price truth, guarded order state machine, payment verify/reject, inventory reservation + expiry, remove dead checkout code | **Complete** |
 | 2 — Banners | Full banner feature (admin CRUD/reorder, homepage carousel) | Not started |
 | 3 — Product/Category hardening | Full server-side CRUD, `/api/products/:slug` + `/search`, rarity/condition in admin form, navbar catalog tree | Not started |
 | 4 — WhatsApp/SEO/Settings | Settings-table-sourced WhatsApp/SEO (fixes env-var disconnect), tabbed Settings page | Not started |
