@@ -14,7 +14,8 @@ export interface AuditLogRow {
 }
 
 export interface InsertAuditLogInput {
-  userId: string;
+  /** Omit for anonymous events (e.g. failed auth attempts) — stored as NULL. */
+  userId?: string;
   action: string;
   tableName: string;
   recordId?: string;
@@ -32,7 +33,7 @@ export async function insertAuditLog(input: InsertAuditLogInput): Promise<void> 
       Prefer: "return=minimal",
     },
     body: JSON.stringify({
-      user_id: input.userId,
+      user_id: input.userId ?? null,
       action: input.action,
       table_name: input.tableName,
       record_id: input.recordId ?? null,
