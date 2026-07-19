@@ -8,6 +8,7 @@ import Testimonials from "@/components/home/testimonials";
 import WhatsAppCTA from "@/components/home/whatsapp-cta";
 import Newsletter from "@/components/home/newsletter";
 import { createClient } from "@/lib/supabase/server";
+import { getHomepageNotifications } from "@/lib/services/notification-service";
 
 export const metadata: Metadata = {
   title: "Legacy Mania — Collect The Stories That Shaped Generations",
@@ -18,8 +19,9 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const [{ data: featured }, { data: categories }, { data: latest }] =
+  const [notifications, { data: featured }, { data: categories }, { data: latest }] =
     await Promise.all([
+      getHomepageNotifications("both"),
       supabase
         .from("products")
         .select("*")
@@ -42,7 +44,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <AnnouncementBar />
+      <AnnouncementBar items={notifications.items} config={notifications.config} />
       <HeroSection />
       <FeaturedCollections products={featured ?? []} />
       <PopularCategories categories={categories ?? []} />
