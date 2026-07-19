@@ -94,6 +94,11 @@ export type Database = {
           meta_description: string | null;
           created_at: string;
           updated_at: string;
+          // Added in migration 008 (branding)
+          icon_url: string | null;
+          appearance: Record<string, unknown>;
+          is_featured: boolean;
+          show_on_homepage: boolean;
         };
         Insert: {
           id?: string;

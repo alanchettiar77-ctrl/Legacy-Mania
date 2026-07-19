@@ -9,6 +9,7 @@ import WhatsAppCTA from "@/components/home/whatsapp-cta";
 import Newsletter from "@/components/home/newsletter";
 import { createClient } from "@/lib/supabase/server";
 import { getHomepageNotifications } from "@/lib/services/notification-service";
+import { getHomepageCategories } from "@/lib/services/branding-service";
 
 export const metadata: Metadata = {
   title: "Legacy Mania — Collect The Stories That Shaped Generations",
@@ -19,21 +20,17 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const [notifications, { data: featured }, { data: categories }, { data: latest }] =
+  const [notifications, categories, { data: featured }, { data: latest }] =
     await Promise.all([
       getHomepageNotifications("both"),
+      // Admin-managed: honors show_on_homepage + display_order, cached with tag revalidation
+      getHomepageCategories(),
       supabase
         .from("products")
         .select("*")
         .eq("is_featured", true)
         .eq("is_active", true)
         .limit(8),
-      supabase
-        .from("categories")
-        .select("*")
-        .is("parent_id", null)
-        .eq("is_active", true)
-        .order("display_order"),
       supabase
         .from("products")
         .select("*, category:categories(*)")
@@ -47,7 +44,7 @@ export default async function HomePage() {
       <AnnouncementBar items={notifications.items} config={notifications.config} />
       <HeroSection />
       <FeaturedCollections products={featured ?? []} />
-      <PopularCategories categories={categories ?? []} />
+      <PopularCategories categories={categories} />
       <LatestReleases products={latest ?? []} />
       <Testimonials />
       <WhatsAppCTA />

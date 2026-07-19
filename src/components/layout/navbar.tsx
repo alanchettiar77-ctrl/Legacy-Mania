@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { ShoppingCart, Search, User, Menu, X, Zap } from "lucide-react";
+import { ShoppingCart, Search, User, Menu, X } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { cn } from "@/lib/utils";
 import CartDrawer from "@/components/cart/cart-drawer";
 import MobileMenu from "@/components/layout/mobile-menu";
+import BrandLogo from "@/components/brand-logo";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -15,7 +16,13 @@ const navLinks = [
   { href: "/about", label: "About" },
 ];
 
-export default function Navbar() {
+export default function Navbar({
+  logoUrl,
+  logoHidden,
+}: {
+  logoUrl?: string;
+  logoHidden?: boolean;
+}) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -41,15 +48,8 @@ export default function Navbar() {
         <div className="container-max">
           <div className="flex items-center justify-between h-16 px-4 md:px-8">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <span className="font-bold text-lg tracking-tight text-foreground">
-                  Legacy<span className="text-primary">Mania</span>
-                </span>
-              </div>
+            <Link href="/" className="flex items-center gap-2 group" aria-label="Legacy Mania home">
+              <BrandLogo logoUrl={logoUrl} hidden={logoHidden} />
             </Link>
 
             {/* Desktop Nav */}

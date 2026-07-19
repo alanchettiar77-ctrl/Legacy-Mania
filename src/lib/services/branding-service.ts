@@ -63,7 +63,7 @@ export async function updateBranding(
 ): Promise<Branding> {
   const merged = { ...(await getBrandingForAdmin()), ...patch };
   await repoUpdateBranding(merged, adminId);
-  revalidateTag("branding");
+  revalidateTag("branding", "max");
   return merged;
 }
 
@@ -85,11 +85,11 @@ export async function updateCategoryBranding(
   patch: CategoryBrandingInput
 ): Promise<Category | null> {
   const updated = await repoUpdateCategory(id, patch);
-  if (updated) revalidateTag("categories-branding");
+  if (updated) revalidateTag("categories-branding", "max");
   return updated;
 }
 
 export async function reorderCategories(ids: string[]): Promise<void> {
   await repoReorderCategories(ids);
-  revalidateTag("categories-branding");
+  revalidateTag("categories-branding", "max");
 }

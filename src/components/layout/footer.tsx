@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Zap, Instagram, Twitter, Youtube } from "lucide-react";
+import { Instagram, Twitter, Youtube } from "lucide-react";
+import BrandLogo from "@/components/brand-logo";
 
 const footerLinks = {
   shop: [
@@ -27,7 +28,13 @@ const footerLinks = {
   ],
 };
 
-export default function Footer() {
+export default function Footer({
+  logoUrl,
+  logoHidden,
+}: {
+  logoUrl?: string;
+  logoHidden?: boolean;
+}) {
   return (
     <footer className="bg-background border-t border-border">
       <div className="container-max px-4 md:px-8 py-12 md:py-16">
@@ -35,13 +42,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-10">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-xl">
-                Legacy<span className="text-primary">Mania</span>
-              </span>
+            <Link href="/" className="flex items-center gap-2 mb-4" aria-label="Legacy Mania home">
+              <BrandLogo logoUrl={logoUrl} hidden={logoHidden} textClassName="font-bold text-xl" />
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed mb-4 max-w-xs">
               India&apos;s premier collectible marketplace for anime cards,

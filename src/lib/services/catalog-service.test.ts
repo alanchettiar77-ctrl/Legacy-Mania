@@ -18,6 +18,10 @@ const pokemon: Category = {
   is_active: true,
   meta_title: null,
   meta_description: null,
+  icon_url: null,
+  appearance: {},
+  is_featured: false,
+  show_on_homepage: true,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
 };

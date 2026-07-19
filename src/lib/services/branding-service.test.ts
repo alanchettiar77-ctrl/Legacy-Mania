@@ -56,7 +56,7 @@ describe("updateBranding", () => {
       expect.objectContaining({ logo_hidden: true }),
       "admin-1"
     );
-    expect(revalidateTag).toHaveBeenCalledWith("branding");
+    expect(revalidateTag).toHaveBeenCalledWith("branding", "max");
   });
 });
 
@@ -64,7 +64,7 @@ describe("category branding", () => {
   it("updateCategoryBranding revalidates only when the row exists", async () => {
     categoryRepo.updateCategoryBranding.mockResolvedValue({ id: "c1" });
     await updateCategoryBranding("c1", { is_featured: true });
-    expect(revalidateTag).toHaveBeenCalledWith("categories-branding");
+    expect(revalidateTag).toHaveBeenCalledWith("categories-branding", "max");
 
     revalidateTag.mockClear();
     categoryRepo.updateCategoryBranding.mockResolvedValue(null);
@@ -75,6 +75,6 @@ describe("category branding", () => {
   it("reorderCategories reorders then revalidates", async () => {
     await reorderCategories(["a", "b"]);
     expect(categoryRepo.reorderCategories).toHaveBeenCalledWith(["a", "b"]);
-    expect(revalidateTag).toHaveBeenCalledWith("categories-branding");
+    expect(revalidateTag).toHaveBeenCalledWith("categories-branding", "max");
   });
 });

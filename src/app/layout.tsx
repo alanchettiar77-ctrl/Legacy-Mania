@@ -5,8 +5,9 @@ import { Toaster } from "sonner";
 import WhatsAppButton from "@/components/layout/whatsapp-button";
 import { CartProvider } from "@/components/providers/cart-provider";
 import AnalyticsProvider from "@/components/providers/analytics-provider";
+import { getBranding } from "@/lib/services/branding-service";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "https://legacymania.in"
   ),
@@ -68,6 +69,40 @@ export const metadata: Metadata = {
     google: "t8s3BFcnydu1pfYODHIBsNR9W0YwwfhbesweFXfzqr0",
   },
 };
+
+/**
+ * Merges admin-managed branding assets (favicon, apple touch icon, OG/Twitter
+ * images, PWA icon) over the static base metadata. Empty slots keep the defaults.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getBranding();
+
+  const icons: Metadata["icons"] | undefined =
+    branding.favicon_url || branding.apple_touch_icon_url || branding.pwa_icon_url
+      ? {
+          ...(branding.favicon_url ? { icon: branding.favicon_url } : {}),
+          ...(branding.apple_touch_icon_url ? { apple: branding.apple_touch_icon_url } : {}),
+          ...(branding.pwa_icon_url
+            ? { other: [{ rel: "icon", url: branding.pwa_icon_url, sizes: "512x512" }] }
+            : {}),
+        }
+      : undefined;
+
+  return {
+    ...baseMetadata,
+    ...(icons ? { icons } : {}),
+    openGraph: {
+      ...baseMetadata.openGraph,
+      ...(branding.og_image_url
+        ? { images: [{ url: branding.og_image_url, width: 1200, height: 630, alt: "Legacy Mania" }] }
+        : {}),
+    },
+    twitter: {
+      ...baseMetadata.twitter,
+      ...(branding.twitter_card_url ? { images: [branding.twitter_card_url] } : {}),
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
