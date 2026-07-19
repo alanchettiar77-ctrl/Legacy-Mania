@@ -27,7 +27,7 @@ phases are tracked in `ROADMAP.md`, not documented here until they exist.
 | Method | Path | Description |
 |---|---|---|
 | GET/POST/DELETE | `/api/admin/admins` | Manage admin accounts |
-| GET | `/api/admin/analytics` | Analytics overview data |
+| GET | `/api/admin/analytics` | Aggregate metrics (orders/products/users counts, revenue, orders-by-status). Rate-limited (30/min per IP). All access (granted + denied) audit-logged. `401` anon / `403` non-admin / `429` over limit. |
 | POST | `/api/admin/faqs` | Create a FAQ |
 | PATCH/DELETE | `/api/admin/faqs/:id` | Update/delete a FAQ |
 | POST | `/api/media/upload` | Upload a file. Form fields: `file` (binary), `namespace` (`"banners"` \| `"products"`). Returns `201` with `{ path, publicUrl, dimensionWarning }`. Rate-limited (30/min per admin). |

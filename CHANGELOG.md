@@ -279,3 +279,17 @@ See `TASKS.md` for the full list.
 - Live end-to-end verification against production Supabase: real order created with server-computed pricing, reservation incremented on order, stock decremented and reservation released on admin verify
 
 See `TASKS.md` for the full list.
+
+---
+
+## [0.8.1] — 2026-07-19 — Analytics API Security Fix
+
+### Fixed — Security
+
+- `GET /api/admin/analytics` previously had **no authentication at all** — any anonymous caller could read total revenue, order/user/product counts, and order-status breakdowns. Now guarded by `requireAdmin()` (401 anon / 403 non-admin), rate-limited (30/min per IP, 429 + Retry-After), and audit-logged via `AuditService` (`analytics.view` on success, `analytics.access_denied` on failed attempts, including caller IP)
+- Analytics queries moved out of the route into a proper `analytics-repository` → `analytics-service` layer per project architecture; response shape unchanged (admin dashboard untouched). Response contains aggregates only — no per-customer rows, so no PII can leak
+- `audit-repository`'s `userId` is now optional (stored as `NULL`) so anonymous failed-auth events can be recorded
+
+### Verified
+
+- Full test suite: 31 suites / 145 tests passing (10 new: service aggregation, PII-shape guard, 401/403/429/500 route paths, audit-log assertions)

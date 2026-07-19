@@ -164,6 +164,8 @@ Admin can add unlimited categories and subcategories from `/admin/categories`.
 - Security headers: via `vercel.json`
 - XSS protection: React's built-in + CSP headers
 - CSRF: Supabase handles via JWT tokens
+- API authorization: every `/api/admin/*` route calls the central `requireAdmin()` helper (401/403), sensitive routes rate-limited via `checkRateLimit()`, admin access audit-logged via `AuditService` (see `SECURITY.md`)
+- `/api/admin/analytics` secured 2026-07-19 (was anonymous): requireAdmin + 30/min/IP rate limit + view/denied audit events
 
 ---
 
