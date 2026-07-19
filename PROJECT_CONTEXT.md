@@ -76,6 +76,7 @@
 | `settings` | Key-value store for site settings |
 | `audit_logs` | All changes logged |
 | `analytics_events` | Custom event tracking |
+| `homepage_notifications` | Admin-managed scrolling homepage bar (migration 007) |
 
 ---
 
@@ -130,6 +131,7 @@ Admin can add unlimited categories and subcategories from `/admin/categories`.
 | `/admin/categories` | Category management |
 | `/admin/users` | User management |
 | `/admin/analytics` | Analytics overview |
+| `/admin/marketing/notifications` | Homepage notification manager (Marketing) |
 | `/admin/settings` | UPI, WhatsApp, SEO, Analytics settings |
 
 ---

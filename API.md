@@ -29,6 +29,12 @@ phases are tracked in `ROADMAP.md`, not documented here until they exist.
 | GET/POST/DELETE | `/api/admin/admins` | Manage admin accounts |
 | GET | `/api/admin/analytics` | Aggregate metrics (orders/products/users counts, revenue, orders-by-status). Rate-limited (30/min per IP). All access (granted + denied) audit-logged. `401` anon / `403` non-admin / `429` over limit. |
 | POST | `/api/admin/faqs` | Create a FAQ |
+| GET/POST | `/api/admin/notifications` | List all / create homepage notifications. Rate-limited (60/min per IP). Mutations audit-logged. |
+| PATCH/DELETE | `/api/admin/notifications/:id` | Update / soft-delete a notification |
+| POST | `/api/admin/notifications/:id/duplicate` | Copy a notification as a hidden draft |
+| POST | `/api/admin/notifications/reorder` | Body `{ ids: uuid[] }` — rewrites `display_order` to match |
+| POST | `/api/admin/notifications/bulk` | Body `{ ids, action: activate\|deactivate\|delete }` |
+| GET/PATCH | `/api/admin/notifications/display-settings` | Marquee display config (speed, direction, colors, visibility) |
 | PATCH/DELETE | `/api/admin/faqs/:id` | Update/delete a FAQ |
 | POST | `/api/media/upload` | Upload a file. Form fields: `file` (binary), `namespace` (`"banners"` \| `"products"`). Returns `201` with `{ path, publicUrl, dimensionWarning }`. Rate-limited (30/min per admin). |
 | DELETE | `/api/media/:namespace/:filename` | Delete an uploaded file by its storage path. |

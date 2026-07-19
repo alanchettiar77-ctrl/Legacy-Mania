@@ -41,7 +41,8 @@ Pending and future work. AI Developer: check this before every session.
 
 - [x] **Admin access management** — `/admin/admins` page to add/remove admins, with owner-account protection
 - [x] **Post-login role routing** — `/auth/redirect` server page routes admins → `/admin`, customers → `/account` after login
-- [x] **Homepage announcement banner** — Scrolling announcement bar component
+- [x] **Homepage announcement banner** — Scrolling announcement bar component (now database-driven — see below)
+- [x] **Dynamic homepage notifications (2026-07-19)** — `homepage_notifications` table + Marketing → Homepage Notifications admin page (search/filter/reorder/schedule/bulk/preview); announcement bar fetches from DB, hides when empty. **Migration `007` must be applied in the Supabase SQL Editor before this works live**
 - [x] **Google Search Console verification** — Meta tag + verification file added
 - [x] **Next.js security upgrade** — Upgraded to 16.2.9, patches CVE-2025-66478 (RCE)
 - [x] **Profile update fix** — Routed through server API with service role key (was silently failing via browser client)

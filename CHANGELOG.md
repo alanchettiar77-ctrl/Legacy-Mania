@@ -293,3 +293,24 @@ See `TASKS.md` for the full list.
 ### Verified
 
 - Full test suite: 31 suites / 145 tests passing (10 new: service aggregation, PII-shape guard, 401/403/429/500 route paths, audit-log assertions)
+
+---
+
+## [0.9.0] — 2026-07-19 — Dynamic Homepage Notification Engine
+
+### Added
+
+- `homepage_notifications` table (migration `007`, **must be applied manually via Supabase SQL Editor**): 13 notification types, schedule window, device targeting, priority + display order, theme/icon/colors, soft delete, future-ready `target_audience`/`country` columns. Seeds the 7 previously hardcoded announcement messages
+- Display config stored in `settings.homepage_notifications_display` (marquee speed, direction, pause-on-hover, colors, font, per-device visibility)
+- Notification repository + service (`notification-repository.ts`, `notification-service.ts`) with storefront feed (`getHomepageNotifications` — never throws, homepage degrades to no bar), CRUD, duplicate-as-draft, reorder, bulk actions, display-config merge
+- Admin APIs under `/api/admin/notifications` (list/create, update/soft-delete, duplicate, reorder, bulk, display-settings) — all rate-limited (60/min/IP), `requireAdmin()`-guarded, zod-validated, audit-logged
+- Admin UI: **Marketing → Homepage Notifications** (`/admin/marketing/notifications`) — search, type/status filters, drag-and-drop + arrow reordering, live marquee preview, create/edit dialog with scheduling, duplicate, bulk activate/hide/delete, display-settings panel
+
+### Changed
+
+- Homepage announcement bar is now fully dynamic: server-fetched from the database (SSR — no layout shift, no client fetch), renders nothing when no live notifications exist, honors admin-configured speed/direction/colors/visibility. Hardcoded message array removed
+
+### Verified
+
+- Full test suite: 36 suites / 187 tests passing (42 new across validation, repository/service, API routes, announcement-bar component)
+- `npx tsc --noEmit`: clean

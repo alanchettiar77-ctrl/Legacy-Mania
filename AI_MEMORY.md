@@ -17,11 +17,16 @@ rules) → `src/app/api/**/route.ts` (thin — auth, validate, call one service 
 
 ## Known gotchas (update this list as things are fixed or discovered)
 
-- **Checkout writes directly from the browser** (`checkout-client.tsx`) with client-supplied
-  prices/totals — no server-side recomputation yet. Real security gap. Fix is Phase 1
-  (`CheckoutService` + `POST /api/checkout`).
-- **`order-status-updater.tsx`** also writes directly from the browser with no guard on status
-  transitions (any status → any status). Same Phase 1 fix.
+- ~~Checkout browser-writes / unguarded status transitions~~ — **fixed in Phase 1** (server-side
+  `CheckoutService` + guarded `OrderService` state machine; see CHANGELOG 0.8.0).
+- **Migration `007_homepage_notifications.sql` must be applied manually** in the Supabase SQL
+  Editor (no CLI in this environment) before the notification engine works live. Until then the
+  homepage bar renders nothing (by design — `getHomepageNotifications` swallows errors) and
+  `/admin/marketing/notifications` shows an empty list. Verify after applying via a curl GET on
+  `/rest/v1/homepage_notifications` with the service-role key (`curl -k` needed on this machine).
+- **`/api/admin/analytics` was fully anonymous until 2026-07-19** — now requireAdmin + rate
+  limit + audit logging. Pattern to copy for any new admin route: rate limit → `requireAdmin()`
+  → zod validate → one service call → `recordAuditLog()`.
 - **WhatsApp number / GA4 / GTM IDs** are editable in Admin → Settings but the app currently
   reads hardcoded env vars at every call site instead of the `settings` table — so admin edits
   silently do nothing today. Fix is Phase 4 (`WhatsAppService`/`SEOService`).

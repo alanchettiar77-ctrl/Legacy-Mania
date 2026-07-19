@@ -19,6 +19,7 @@ Reflects the actual live schema as of `supabase/migrations/003_platform_foundati
 - **faqs** — id (PK), question, answer, display_order, is_active, timestamps
 - **banners** *(new in `003`)* — id (PK), title, description, image_url, category_id (FK→categories, `ON DELETE CASCADE`), display_order (partial-unique where `deleted_at IS NULL`), is_active, timestamps, deleted_at (soft delete). Public RLS: `is_active = TRUE AND deleted_at IS NULL`.
 - **contact_messages** *(new in `003`)* — id (PK), name, email, message, status (`new`|`read`|`replied`), created_at. No public SELECT policy — insert-only via the service-role-backed `/api/contact` route (Phase 5).
+- **homepage_notifications** *(new in `007`)* — id (PK), title (internal label), message, short_message, type (13-value CHECK: sale, limited_stock, new_arrival, trending, recently_sold, new_collection, offer, flash_sale, announcement, shipping_update, event, countdown, custom), cta_text, cta_url, priority, display_order, is_active, theme, icon, animation, background_color, text_color, start_date/end_date (schedule window, CHECK end > start), device (`desktop`|`mobile`|`both`), target_audience (jsonb, future-ready), country (future-ready), created_by/updated_by (FK→profiles), timestamps, deleted_at (soft delete). Public RLS: active + not deleted + inside schedule window; admin-read via `is_admin()`; **no anon write policies** — all writes via service-role API routes. Display config lives in `settings.homepage_notifications_display` (jsonb).
 
 ## Storage buckets
 
