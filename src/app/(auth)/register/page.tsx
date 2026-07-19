@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -26,19 +25,16 @@ export default function RegisterPage() {
   });
 
   const onSubmit = async (data: FormData) => {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: {
-          full_name: data.fullName,
-          phone: data.phone,
-        },
-      },
+    // Server route re-validates, sanitizes the name, rate-limits, and returns
+    // only generic errors (no user enumeration).
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
-    if (error) {
-      toast.error(error.message);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      toast.error(body.error || "Registration failed");
       return;
     }
     toast.success("Account created! Please check your email to verify.");

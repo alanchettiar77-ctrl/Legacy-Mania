@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -22,13 +21,15 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: FormData) => {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
+    // Server route re-validates, rate-limits, and returns only generic errors.
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
-    if (error) {
-      toast.error(error.message);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      toast.error(body.error || "Sign in failed");
       return;
     }
     toast.success("Welcome back!");
