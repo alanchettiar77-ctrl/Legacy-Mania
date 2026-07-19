@@ -20,6 +20,15 @@ Domain rules that live in the service layer. Code is the enforcement point; this
 - Display styling (speed, direction, colors, per-device visibility) is one JSON config in `settings.homepage_notifications_display`, editable only by admins.
 - Future automation (live "X just purchased" feeds): to be built as a service that inserts/updates rows in `homepage_notifications` — the schema (`type`, `target_audience`, `country`) is ready; **no fake live notifications** are ever to be hardcoded.
 
+## Branding (2026-07-19)
+
+- Branding is content: logo, favicon, social images, category icons/appearance all come from the DB (`settings.branding` + `categories` columns) — never hardcoded.
+- Empty slot (`""`) = use the built-in default (text wordmark, static og-image). `logo_hidden` hides the logo entirely without deleting the uploaded asset.
+- Hiding a category (`is_active=false`) removes it from homepage, navigation, catalog and search — products are never deleted or unlinked.
+- `show_on_homepage=false` hides only the homepage card; the category stays browsable in the catalog.
+- Storefront branding/category reads are cached 5 minutes and tag-revalidated on every admin edit — changes appear within seconds without redeploys.
+- Only PNG/JPG/WEBP up to 2 MB via MediaService; SVG is always rejected (XSS).
+
 ## Admin & Analytics
 
 - Analytics responses contain aggregates only (counts, revenue totals, status breakdown) — never per-customer rows.

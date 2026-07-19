@@ -314,3 +314,25 @@ See `TASKS.md` for the full list.
 
 - Full test suite: 36 suites / 187 tests passing (42 new across validation, repository/service, API routes, announcement-bar component)
 - `npx tsc --noEmit`: clean
+
+---
+
+## [0.10.0] — 2026-07-19 — Dynamic Branding & Category Management
+
+### Added
+
+- Migration `008_branding.sql` (**must be applied manually via Supabase SQL Editor**): categories gain `icon_url`, `appearance` (jsonb), `is_featured`, `show_on_homepage`; new `branding` key in `settings` with 9 asset slots (logo, hero logo, badge logo, favicon, apple touch icon, OG image, Twitter card, PWA icon) + `logo_hidden`
+- `branding-repository` / `branding-service` / `validation/branding.ts` — cached storefront reads (5 min ISR + tag revalidation, so admin edits go live in seconds), never-throw storefront getters
+- Admin APIs: `GET/PATCH /api/admin/branding`, `PATCH /api/admin/categories/order`, `PATCH /api/admin/categories/:id/branding` — rate-limited, requireAdmin, zod-validated, audit-logged (`branding.update` records old + new values)
+- MediaService `branding` namespace (reuses public banners bucket; PNG/JPG/WEBP, 2 MB; SVG deliberately rejected — XSS risk)
+- Admin UI: **Marketing → Branding** (`/admin/marketing/branding`) — live logo preview, hide/restore, 8 asset slot cards with upload/replace/remove, category list with icon upload, drag + arrow reordering, appearance editor (colors/gradient/radius/shadow/badge/animation), featured/homepage/visibility toggles
+- `BrandLogo` shared component — single source of truth for the logo everywhere (image when set, built-in wordmark fallback, fixed height = no layout shift)
+
+### Changed
+
+- Navbar, footer, homepage now render branding dynamically; root layout `generateMetadata` merges admin-managed favicon/OG/Twitter/PWA icons over defaults
+- Homepage "Browse by Series" cards fully admin-configurable: icon, colors, gradient, radius, shadow, badge, hover animation, order, homepage visibility. Hidden categories (`is_active=false`) disappear from homepage/nav/catalog/search without touching products
+
+### Verified
+
+- Full test suite: 40 suites / 207 tests passing (20 new); `npx tsc --noEmit` clean

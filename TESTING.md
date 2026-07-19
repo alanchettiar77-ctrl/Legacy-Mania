@@ -29,4 +29,4 @@ No harness exists for: browser E2E (beyond `checkout-e2e.js`), visual regression
 
 ## Current status (2026-07-19)
 
-36 suites / 187 tests passing; type-check clean.
+40 suites / 207 tests passing; type-check clean.

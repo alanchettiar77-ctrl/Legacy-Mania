@@ -35,8 +35,11 @@ phases are tracked in `ROADMAP.md`, not documented here until they exist.
 | POST | `/api/admin/notifications/reorder` | Body `{ ids: uuid[] }` — rewrites `display_order` to match |
 | POST | `/api/admin/notifications/bulk` | Body `{ ids, action: activate\|deactivate\|delete }` |
 | GET/PATCH | `/api/admin/notifications/display-settings` | Marquee display config (speed, direction, colors, visibility) |
+| GET/PATCH | `/api/admin/branding` | Brand asset slots (logo, favicon, OG/Twitter/PWA images) + `logo_hidden`. PATCH with `""` clears a slot back to default. Audit-logged with old+new values. |
+| PATCH | `/api/admin/categories/order` | Body `{ ids: uuid[] }` — rewrites category `display_order` |
+| PATCH | `/api/admin/categories/:id/branding` | Category `icon_url`/`appearance`/`is_featured`/`show_on_homepage`/`is_active` |
 | PATCH/DELETE | `/api/admin/faqs/:id` | Update/delete a FAQ |
-| POST | `/api/media/upload` | Upload a file. Form fields: `file` (binary), `namespace` (`"banners"` \| `"products"`). Returns `201` with `{ path, publicUrl, dimensionWarning }`. Rate-limited (30/min per admin). |
+| POST | `/api/media/upload` | Upload a file. Form fields: `file` (binary), `namespace` (`"banners"` \| `"products"` \| `"branding"`). Returns `201` with `{ path, publicUrl, dimensionWarning }`. Rate-limited (30/min per admin). PNG/JPG/WEBP only, 2 MB max — SVG rejected (XSS risk). |
 | DELETE | `/api/media/:namespace/:filename` | Delete an uploaded file by its storage path. |
 
 ## Known dead/removed code (not yet cleaned up — scheduled for Phase 1)

@@ -24,6 +24,11 @@ rules) → `src/app/api/**/route.ts` (thin — auth, validate, call one service 
   homepage bar renders nothing (by design — `getHomepageNotifications` swallows errors) and
   `/admin/marketing/notifications` shows an empty list. Verify after applying via a curl GET on
   `/rest/v1/homepage_notifications` with the service-role key (`curl -k` needed on this machine).
+- **Migration `008_branding.sql` must be applied manually** (same SQL Editor flow as 007) before
+  the Branding dashboard works — until then `/admin/marketing/branding` shows a "migration not
+  applied" notice and the storefront falls back to the built-in text logo / default category
+  cards (all degrade gracefully). Branding reads are ISR-cached 5 min with tag revalidation
+  (`revalidateTag(tag, "max")` — Next 16 requires the second arg).
 - **`/api/admin/analytics` was fully anonymous until 2026-07-19** — now requireAdmin + rate
   limit + audit logging. Pattern to copy for any new admin route: rate limit → `requireAdmin()`
   → zod validate → one service call → `recordAuditLog()`.

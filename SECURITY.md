@@ -10,7 +10,11 @@ Security model reference. Update whenever an auth-relevant surface changes.
 
 ## Rate limiting
 
-`checkRateLimit(key, limit, windowMs)` (`src/lib/rate-limit.ts`) — per-instance, in-memory, best-effort (resets on cold start; not shared across serverless instances). Applied to: checkout (10/min/ip), media upload (30/min/admin), analytics (30/min/ip), notifications admin APIs (60/min/ip).
+`checkRateLimit(key, limit, windowMs)` (`src/lib/rate-limit.ts`) — per-instance, in-memory, best-effort (resets on cold start; not shared across serverless instances). Applied to: checkout (10/min/ip), media upload (30/min/admin), analytics (30/min/ip), notifications admin APIs (60/min/ip), branding + category admin APIs (60/min/ip).
+
+## Upload policy
+
+MediaService only: PNG/JPG/WEBP, 2 MB max, sharp-validated (corrupt files rejected), UUID filenames (no path traversal / filename XSS), namespace whitelist. **SVG is rejected by design** — SVGs can embed scripts and are an XSS vector when served from the site origin.
 
 ## Audit logging
 

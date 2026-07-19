@@ -132,6 +132,7 @@ Admin can add unlimited categories and subcategories from `/admin/categories`.
 | `/admin/users` | User management |
 | `/admin/analytics` | Analytics overview |
 | `/admin/marketing/notifications` | Homepage notification manager (Marketing) |
+| `/admin/marketing/branding` | Branding dashboard: logo/asset slots, category icons/appearance/order/visibility |
 | `/admin/settings` | UPI, WhatsApp, SEO, Analytics settings |
 
 ---
