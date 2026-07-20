@@ -8,7 +8,7 @@ type RequireAdminResult =
   | { ok: true; userId: string }
   | { ok: false; response: NextResponse };
 
-async function getCallerRole(userId: string): Promise<string | null> {
+export async function getCallerRole(userId: string): Promise<string | null> {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=role&limit=1`,

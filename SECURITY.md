@@ -4,7 +4,7 @@ Security model reference. Update whenever an auth-relevant surface changes.
 
 ## Authorization model
 
-- **Central helper:** `requireAdmin()` (`src/lib/supabase/admin-auth.ts`) — the only admin gate. Resolves the session user via the cookie-scoped Supabase client, then reads `profiles.role` via the service-role key (fails closed on any error). Returns 401 (no session) / 403 (not admin). Every `/api/admin/*` route and admin-capable route (`/api/media/*`) must call it first. **Never duplicate role checks inline.**
+- **Central helpers:** `requireAdmin()` (route/server-component guard) and the exported `getCallerRole()` it wraps (both in `src/lib/supabase/admin-auth.ts`) — the only two admin-role primitives. `requireAdmin()` resolves the session user via the cookie-scoped Supabase client, then reads `profiles.role` via `getCallerRole()` (service-role key, fails closed on any error), returning 401 (no session) / 403 (not admin). Every `/api/admin/*` route and admin-capable route (`/api/media/*`) must call `requireAdmin()` first. Call sites that already have a `user.id` and just need the role — `middleware.ts`, `/api/auth/role`, `/auth/redirect` — call `getCallerRole()` directly instead of re-fetching. **Never duplicate the fetch-and-compare logic inline.**
 - **Service-role key** is used by repositories/services (bypasses RLS); therefore every route in front of them is responsible for authorization.
 - **RLS** protects direct PostgREST access with the public anon key: admin-gated tables use the `SECURITY DEFINER is_admin()` helper (migration 005) to avoid the recursion bug; checkout RPCs have `EXECUTE` revoked from `anon`/`PUBLIC` (migration 006).
 
@@ -36,6 +36,7 @@ See `API.md` — the section headers (Public / Customer / Admin) are the source 
 | 2026-07-19 | `/api/admin/analytics` fully anonymous — leaked revenue/user counts | `requireAdmin()` + rate limit + audit logging |
 | 2026-07-20 | Open redirect on post-login navigation (`login` page + `/auth/redirect`) | `getSafeRedirect()` allow-lists relative paths only (`src/lib/utils.ts`) |
 | 2026-07-20 | `forgot-password` relayed Supabase's raw error text (latent enumeration risk) | Fixed generic message, matching `login`/`register` route pattern |
+| 2026-07-21 | Admin role-check logic duplicated 5x (drift risk — one copy wasn't fail-closed) | Consolidated to exported `getCallerRole()` in `admin-auth.ts`, used by all 5 call sites |
 
 ## Reporting
 

@@ -9,7 +9,7 @@ jest.mock("@/lib/supabase/server", () => ({
 
 const originalFetch = global.fetch;
 
-import { requireAdmin } from "@/lib/supabase/admin-auth";
+import { requireAdmin, getCallerRole } from "@/lib/supabase/admin-auth";
 
 describe("requireAdmin", () => {
   afterEach(() => {
@@ -110,5 +110,38 @@ describe("requireAdmin", () => {
 
     const fetchCall = mockFetch.mock.calls[0][0];
     expect(fetchCall).toContain(`id=eq.${encodeURIComponent("user@domain.com")}`);
+  });
+});
+
+describe("getCallerRole", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+    global.fetch = originalFetch;
+  });
+
+  it("returns the role when the profile exists", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [{ role: "admin" }],
+    }) as unknown as typeof fetch;
+    expect(await getCallerRole("user-1")).toBe("admin");
+  });
+
+  it("returns null when no profile row is found", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [],
+    }) as unknown as typeof fetch;
+    expect(await getCallerRole("user-1")).toBeNull();
+  });
+
+  it("fails closed (returns null) when the fetch itself throws", async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error("network down")) as unknown as typeof fetch;
+    expect(await getCallerRole("user-1")).toBeNull();
+  });
+
+  it("fails closed (returns null) when the response is not ok", async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false }) as unknown as typeof fetch;
+    expect(await getCallerRole("user-1")).toBeNull();
   });
 });
