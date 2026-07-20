@@ -9,6 +9,13 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Matches server.ts's cookieOptions — the token refresh that happens here must
+      // re-set the cookie with the same httpOnly/secure attributes, not the library
+      // defaults, or a refresh would silently downgrade the cookie's protection.
+      cookieOptions: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll();

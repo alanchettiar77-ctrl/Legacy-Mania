@@ -5,7 +5,7 @@ export default async function AdminOrdersPage() {
   const supabase = await createClient();
   const { data: orders } = await supabase
     .from("orders")
-    .select("*, order_items(count)")
+    .select("*, order_items(count), payments(id)")
     .order("created_at", { ascending: false });
 
   const pendingCount = orders?.filter((o) => o.status === "payment_verification").length ?? 0;

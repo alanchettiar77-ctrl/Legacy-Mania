@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/utils";
 import { toast } from "sonner";
 import { Upload, X, Plus } from "lucide-react";
@@ -95,47 +94,46 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
   };
 
   const onSubmit = async (data: ProductFormData) => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const supabase = createClient() as any;
-      const payload = {
-        name: data.name,
-        slug: data.slug,
-        description: data.description ?? null,
-        price: data.price,
-        compare_price: data.compare_price ?? null,
-        images,
-        tags: [] as string[],
-        category_id: data.category_id || null,
-        series: data.series ?? null,
-        saga: data.saga ?? null,
-        collection: data.collection ?? null,
-        stock_quantity: data.stock_quantity,
-        sku: data.sku ?? null,
-        is_active: data.is_active,
-        is_featured: data.is_featured,
-        is_new: data.is_new,
-        meta_title: data.meta_title ?? null,
-        meta_description: data.meta_description ?? null,
-      };
+    const payload = {
+      name: data.name,
+      slug: data.slug,
+      description: data.description ?? null,
+      price: data.price,
+      compare_price: data.compare_price ?? null,
+      images,
+      tags: [] as string[],
+      category_id: data.category_id || null,
+      series: data.series ?? null,
+      saga: data.saga ?? null,
+      collection: data.collection ?? null,
+      stock_quantity: data.stock_quantity,
+      sku: data.sku ?? null,
+      is_active: data.is_active,
+      is_featured: data.is_featured,
+      is_new: data.is_new,
+      meta_title: data.meta_title ?? null,
+      meta_description: data.meta_description ?? null,
+    };
 
-      if (initialData?.id) {
-        const { error } = await supabase
-          .from("products")
-          .update(payload)
-          .eq("id", initialData.id);
-        if (error) throw error;
-        toast.success("Product updated");
-      } else {
-        const { error } = await supabase.from("products").insert([payload]);
-        if (error) throw error;
-        toast.success("Product created");
-      }
-      router.push("/admin/products");
-      router.refresh();
-    } catch (err) {
+    const res = initialData?.id
+      ? await fetch(`/api/admin/products/${initialData.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+      : await fetch("/api/admin/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+    if (!res.ok) {
       toast.error("Failed to save product");
+      return;
     }
+    toast.success(initialData?.id ? "Product updated" : "Product created");
+    router.push("/admin/products");
+    router.refresh();
   };
 
   return (

@@ -4,6 +4,21 @@ import { createClient } from "@/lib/supabase/server";
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
+export async function GET() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}&select=full_name,phone&limit=1`,
+    { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }, cache: "no-store" }
+  );
+  const rows = res.ok ? await res.json() : [];
+  const profile = rows[0] ?? { full_name: null, phone: null };
+
+  return NextResponse.json({ email: user.email ?? "", ...profile });
+}
+
 export async function PATCH(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

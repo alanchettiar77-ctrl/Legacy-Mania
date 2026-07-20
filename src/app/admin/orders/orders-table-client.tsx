@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from "@/lib/utils";
 import { toast } from "sonner";
 import { Eye, CheckCircle, Truck, PackageCheck, Loader2 } from "lucide-react";
@@ -16,6 +15,7 @@ interface Order {
   total: number;
   status: string;
   order_items: { count: number }[];
+  payments: { id: string }[];
 }
 
 const NEXT_STATUS: Record<string, { value: string; label: string; icon: React.ElementType; color: string } | null> = {
@@ -32,15 +32,19 @@ export default function OrdersTableClient({ initialOrders }: { initialOrders: Or
   const handleQuickUpdate = async (orderId: string, newStatus: string) => {
     setLoadingId(orderId);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
-      if (error) throw error;
-
       if (newStatus === "confirmed") {
-        const { data: payment } = await supabase.from("payments").select("id").eq("order_id", orderId).single();
-        if (payment) {
-          await supabase.from("payments").update({ status: "verified", verified_at: new Date().toISOString() }).eq("id", payment.id);
-        }
+        const order = orders.find((o) => o.id === orderId);
+        const paymentId = order?.payments?.[0]?.id;
+        if (!paymentId) throw new Error("No payment found for this order");
+        const res = await fetch(`/api/admin/payments/${paymentId}/verify`, { method: "PATCH" });
+        if (!res.ok) throw new Error("Failed to verify payment");
+      } else {
+        const res = await fetch(`/api/admin/orders/${orderId}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        });
+        if (!res.ok) throw new Error("Failed to update order");
       }
 
       setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));

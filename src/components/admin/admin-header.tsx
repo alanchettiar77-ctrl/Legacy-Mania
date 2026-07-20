@@ -2,15 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { Bell, LogOut, User } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 export default function AdminHeader() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     toast.success("Logged out");
     router.push("/login");
   };

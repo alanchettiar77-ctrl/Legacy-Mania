@@ -38,6 +38,26 @@ export async function listAllCategories(): Promise<Category[]> {
   return res.json();
 }
 
+export interface CategoryWritePayload {
+  name: string;
+  slug: string;
+  description: string | null;
+  parent_id: string | null;
+  display_order: number;
+  is_active: boolean;
+}
+
+export async function insertCategory(payload: CategoryWritePayload): Promise<Category> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/categories`, {
+    method: "POST",
+    headers: { ...HEADERS, Prefer: "return=representation" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Failed to create category: ${res.status}`);
+  const rows = await res.json();
+  return rows[0];
+}
+
 export async function updateCategoryBranding(
   id: string,
   patch: Record<string, unknown>

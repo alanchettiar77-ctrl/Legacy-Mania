@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, MapPin, X, Check } from "lucide-react";
 import { INDIAN_STATES } from "@/lib/utils";
@@ -58,21 +57,13 @@ export default function AddressesPage() {
   });
 
   const fetchAddresses = async () => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
+    const res = await fetch("/api/account/addresses");
+    if (res.status === 401) {
       router.push("/login");
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
-      .from("addresses")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("is_default", { ascending: false });
-    setAddresses(data ?? []);
+    const data = await res.json();
+    setAddresses(res.ok ? data : []);
     setLoading(false);
   };
 
@@ -112,53 +103,30 @@ export default function AddressesPage() {
   };
 
   const onSubmit = async (data: AddressFormData) => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any;
+    const res = editing
+      ? await fetch(`/api/account/addresses/${editing.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        })
+      : await fetch("/api/account/addresses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
 
-    // If marking as default, unset other defaults first
-    if (data.is_default) {
-      await db
-        .from("addresses")
-        .update({ is_default: false })
-        .eq("user_id", user.id);
+    if (!res.ok) {
+      toast.error(editing ? "Failed to update address" : "Failed to save address");
+      return;
     }
-
-    if (editing) {
-      const { error } = await db
-        .from("addresses")
-        .update({ ...data })
-        .eq("id", editing.id);
-      if (error) {
-        toast.error("Failed to update address");
-        return;
-      }
-      toast.success("Address updated");
-    } else {
-      const { error } = await db.from("addresses").insert([
-        { ...data, user_id: user.id },
-      ]);
-      if (error) {
-        toast.error("Failed to save address");
-        return;
-      }
-      toast.success("Address added");
-    }
+    toast.success(editing ? "Address updated" : "Address added");
     setShowForm(false);
     fetchAddresses();
   };
 
   const handleDelete = async (id: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (createClient() as any)
-      .from("addresses")
-      .delete()
-      .eq("id", id);
-    if (error) {
+    const res = await fetch(`/api/account/addresses/${id}`, { method: "DELETE" });
+    if (!res.ok) {
       toast.error("Failed to delete");
       return;
     }
@@ -167,18 +135,15 @@ export default function AddressesPage() {
   };
 
   const setDefault = async (id: string) => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any;
-    await db
-      .from("addresses")
-      .update({ is_default: false })
-      .eq("user_id", user.id);
-    await db.from("addresses").update({ is_default: true }).eq("id", id);
+    const res = await fetch(`/api/account/addresses/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_default: true }),
+    });
+    if (!res.ok) {
+      toast.error("Failed to update default address");
+      return;
+    }
     toast.success("Default address updated");
     fetchAddresses();
   };

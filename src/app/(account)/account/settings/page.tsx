@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
@@ -46,22 +45,14 @@ export default function AccountSettingsPage() {
 
   useEffect(() => {
     const init = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+      const res = await fetch("/api/account/profile");
+      if (res.status === 401) {
         router.push("/login");
         return;
       }
-      setEmail(user.email ?? "");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: profile } = await (supabase as any)
-        .from("profiles")
-        .select("full_name, phone")
-        .eq("id", user.id)
-        .single();
-      if (profile) {
+      if (res.ok) {
+        const profile = await res.json();
+        setEmail(profile.email ?? "");
         profileForm.reset({
           full_name: profile.full_name ?? "",
           phone: profile.phone ?? "",
@@ -87,12 +78,13 @@ export default function AccountSettingsPage() {
   };
 
   const onChangePassword = async (data: PasswordFormData) => {
-    const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({
-      password: data.password,
+    const res = await fetch("/api/account/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: data.password }),
     });
-    if (error) {
-      toast.error(error.message);
+    if (!res.ok) {
+      toast.error("Failed to change password");
       return;
     }
     toast.success("Password changed successfully");
@@ -238,8 +230,7 @@ export default function AccountSettingsPage() {
         </p>
         <button
           onClick={async () => {
-            const supabase = createClient();
-            await supabase.auth.signOut();
+            await fetch("/api/auth/logout", { method: "POST" });
             router.push("/");
             toast.success("Signed out");
           }}

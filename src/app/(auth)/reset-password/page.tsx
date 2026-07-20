@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Lock } from "lucide-react";
 
@@ -31,12 +30,13 @@ export default function ResetPasswordPage() {
   });
 
   const onSubmit = async (data: FormData) => {
-    const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({
-      password: data.password,
+    const res = await fetch("/api/account/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: data.password }),
     });
-    if (error) {
-      toast.error(error.message);
+    if (!res.ok) {
+      toast.error("Failed to update password. The reset link may have expired.");
       return;
     }
     setDone(true);

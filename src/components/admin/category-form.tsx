@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -43,29 +42,34 @@ export default function CategoryForm({ parentCategories, initialData }: Category
   });
 
   const onSubmit = async (data: FormData) => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const supabase = createClient() as any;
-      const payload = {
-        name: data.name,
-        slug: data.slug,
-        description: data.description ?? null,
-        parent_id: data.parent_id || null,
-        display_order: data.display_order,
-        is_active: data.is_active,
-      };
-      if (initialData?.id) {
-        await supabase.from("categories").update(payload).eq("id", initialData.id);
-        toast.success("Category updated");
-      } else {
-        await supabase.from("categories").insert([payload]);
-        toast.success("Category created");
-      }
-      router.refresh();
-      form.reset();
-    } catch {
+    const payload = {
+      name: data.name,
+      slug: data.slug,
+      description: data.description ?? null,
+      parent_id: data.parent_id || null,
+      display_order: data.display_order,
+      is_active: data.is_active,
+    };
+
+    const res = initialData?.id
+      ? await fetch(`/api/admin/categories/${initialData.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+      : await fetch("/api/admin/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+    if (!res.ok) {
       toast.error("Failed to save category");
+      return;
     }
+    toast.success(initialData?.id ? "Category updated" : "Category created");
+    router.refresh();
+    form.reset();
   };
 
   return (

@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { Eye, Edit, EyeOff, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -27,12 +26,12 @@ export default function ProductsTable({ initialProducts }: { initialProducts: Pr
   const [products, setProducts] = useState(initialProducts);
 
   const toggleActive = async (id: string, current: boolean) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (createClient() as any)
-      .from("products")
-      .update({ is_active: !current })
-      .eq("id", id);
-    if (error) {
+    const res = await fetch(`/api/admin/products/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: !current }),
+    });
+    if (!res.ok) {
       toast.error("Failed to update status");
       return;
     }

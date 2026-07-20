@@ -11,6 +11,14 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // @supabase/ssr defaults to httpOnly:false (JS-writable) so the browser client can
+      // manage its own session. Every auth-relevant browser call has been migrated to
+      // server routes (see AUTH_AUDIT.md Finding #1), so the browser client never touches
+      // this cookie anymore — safe to lock it down here.
+      cookieOptions: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll();

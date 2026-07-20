@@ -14,6 +14,12 @@ Security model reference. Update whenever an auth-relevant surface changes.
 
 **Account lockout:** `login_attempts` table (migration 009) + `login-throttle-service.ts` — 5 consecutive failed logins for the same email lock it for 15 minutes, independent of and in addition to the per-IP limiter above. Locked and wrong-password responses are byte-identical (`401 {"error": "Invalid email or password"}`) — never reveal lockout state. On the failure that triggers lockout, a Supabase password-reset email is sent to the account once (not resent on subsequent blocked attempts).
 
+## Session cookies
+
+Server-set only: `src/lib/supabase/server.ts` and `middleware.ts` pass `cookieOptions: { httpOnly: true, secure: <production> }` to `createServerClient`. The browser client (`src/lib/supabase/client.ts`) never manages session state — every auth-relevant browser call (login, register, logout, password change, password reset, profile update, address/product/category/settings CRUD) goes through a server route instead, matching the pattern established by checkout/payments. This is load-bearing: the browser client structurally cannot set `httpOnly` (no JS API for it), so if it ever touches the session cookie again it will silently overwrite the server's protected cookie non-httpOnly. **Before adding any new `createClient()` (browser) call that reads/writes auth state, route it through a server API instead.**
+
+The password-reset link exchanges its PKCE code server-side at `/auth/confirm` (not in the browser) for the same reason — see `AUTH_AUDIT.md` Finding #1.
+
 ## Upload policy
 
 MediaService only: PNG/JPG/WEBP, 2 MB max, sharp-validated (corrupt files rejected), UUID filenames (no path traversal / filename XSS), namespace whitelist. **SVG is rejected by design** — SVGs can embed scripts and are an XSS vector when served from the site origin.
@@ -40,6 +46,8 @@ See `API.md` — the section headers (Public / Customer / Admin) are the source 
 | 2026-07-20 | `forgot-password` relayed Supabase's raw error text (latent enumeration risk) | Fixed generic message, matching `login`/`register` route pattern |
 | 2026-07-21 | Admin role-check logic duplicated 5x (drift risk — one copy wasn't fail-closed) | Consolidated to exported `getCallerRole()` in `admin-auth.ts`, used by all 5 call sites |
 | 2026-07-21 | No per-account brute-force ceiling (only a soft per-IP, per-instance limiter) | `login_attempts` table + `login-throttle-service.ts`: 5-consecutive-failure / 15-min lockout with progressive delay |
+| 2026-07-21 | Session cookie not `httpOnly` — any XSS could exfiltrate it for full session takeover | `cookieOptions: { httpOnly: true, secure }` on server/middleware clients; all ~13 browser-client auth/CRUD call sites migrated to server routes first (see `AUTH_AUDIT.md` Finding #1) |
+| 2026-07-21 | Admin orders list quick-actions wrote `orders`/`payments` directly, bypassing `OrderService`'s guarded transitions and `PaymentService`'s verify audit trail | `orders-table-client.tsx` now calls the existing `PATCH /api/admin/orders/[id]/status` and `PATCH /api/admin/payments/[id]/verify` routes |
 
 ## Reporting
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
 import Image from "next/image";
@@ -27,13 +26,13 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
   const save = async (keys: string[]) => {
     setSaving(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const supabase = createClient() as any;
-      for (const key of keys) {
-        await supabase
-          .from("settings")
-          .upsert({ key, value: settings[key] || "" }, { onConflict: "key" });
-      }
+      const entries = Object.fromEntries(keys.map((key) => [key, settings[key] || ""]));
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(entries),
+      });
+      if (!res.ok) throw new Error("Failed to save settings");
       toast.success("Settings saved");
     } catch {
       toast.error("Failed to save settings");
@@ -47,14 +46,20 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
     if (!file) return;
     setUploadingQr(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const supabase = createClient() as any;
-      const ext = file.name.split(".").pop();
-      const path = `upi/qr-code.${ext}`;
-      await supabase.storage.from("settings").upload(path, file, { upsert: true });
-      const { data: { publicUrl } } = supabase.storage.from("settings").getPublicUrl(path);
-      update("upi_qr_url", publicUrl);
-      await supabase.from("settings").upsert({ key: "upi_qr_url", value: publicUrl }, { onConflict: "key" });
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("namespace", "upi");
+      const uploadRes = await fetch("/api/media/upload", { method: "POST", body: formData });
+      const uploadBody = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadBody.error || "Upload failed");
+
+      update("upi_qr_url", uploadBody.publicUrl);
+      const saveRes = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ upi_qr_url: uploadBody.publicUrl }),
+      });
+      if (!saveRes.ok) throw new Error("Failed to save QR URL");
       toast.success("UPI QR uploaded");
     } catch {
       toast.error("Upload failed");

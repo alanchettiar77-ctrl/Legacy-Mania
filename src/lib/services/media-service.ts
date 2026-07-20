@@ -12,6 +12,9 @@ export const MEDIA_NAMESPACES = {
   // Brand assets (logos, favicons, category icons). Reuses the public banners bucket —
   // paths are prefixed "branding/" so no new storage bucket/policy is needed.
   branding: { bucket: "banners", recommendedWidth: null, recommendedHeight: null, public: true },
+  // UPI QR code. Reuses the public banners bucket — paths are prefixed "upi/" so no new
+  // storage bucket/policy is needed, same rationale as the branding namespace above.
+  upi: { bucket: "banners", recommendedWidth: null, recommendedHeight: null, public: true },
 } as const;
 
 export type MediaNamespace = keyof typeof MEDIA_NAMESPACES;
