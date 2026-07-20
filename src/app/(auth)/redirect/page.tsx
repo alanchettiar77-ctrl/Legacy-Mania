@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSafeRedirect } from "@/lib/utils";
 
 export default async function AuthRedirectPage({
   searchParams,
@@ -36,9 +37,8 @@ export default async function AuthRedirectPage({
 
   if (role === "admin") {
     redirect("/admin");
-  } else if (params.redirect) {
-    redirect(decodeURIComponent(params.redirect));
   } else {
-    redirect("/account");
+    const target = params.redirect ? decodeURIComponent(params.redirect) : null;
+    redirect(getSafeRedirect(target, "/account"));
   }
 }

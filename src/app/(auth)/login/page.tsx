@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { getSafeRedirect } from "@/lib/utils";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -38,8 +39,8 @@ export default function LoginPage() {
     // If redirect is /account (set by middleware when user icon is clicked while logged out),
     // ignore it and go to /admin so middleware can route based on role:
     // admins → /admin, customers → /account
-    const destination =
-      redirectParam && !redirectParam.startsWith("/account") ? redirectParam : "/admin";
+    const safeRedirect = getSafeRedirect(redirectParam, "/admin");
+    const destination = safeRedirect.startsWith("/account") ? "/admin" : safeRedirect;
     window.location.href = destination;
   };
 

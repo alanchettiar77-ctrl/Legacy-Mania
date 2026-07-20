@@ -34,6 +34,8 @@ See `API.md` — the section headers (Public / Customer / Admin) are the source 
 | 2026-07-14 | `profiles` RLS infinite recursion broke admin-gated queries | `SECURITY DEFINER is_admin()` (migration 005) |
 | 2026-07-14 | Checkout RPCs executable by `anon` key — stock corruption possible | `REVOKE EXECUTE` (migration 006) |
 | 2026-07-19 | `/api/admin/analytics` fully anonymous — leaked revenue/user counts | `requireAdmin()` + rate limit + audit logging |
+| 2026-07-20 | Open redirect on post-login navigation (`login` page + `/auth/redirect`) | `getSafeRedirect()` allow-lists relative paths only (`src/lib/utils.ts`) |
+| 2026-07-20 | `forgot-password` relayed Supabase's raw error text (latent enumeration risk) | Fixed generic message, matching `login`/`register` route pattern |
 
 ## Reporting
 

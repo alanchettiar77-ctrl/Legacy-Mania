@@ -32,6 +32,13 @@ export function truncate(str: string, length: number): string {
   return str.substring(0, length) + "...";
 }
 
+export function getSafeRedirect(target: string | null | undefined, fallback: string): string {
+  if (!target) return fallback;
+  if (!target.startsWith("/")) return fallback;
+  if (target.startsWith("//") || target.startsWith("/\\")) return fallback;
+  return target;
+}
+
 export function getWhatsAppUrl(phone: string, message: string): string {
   const encoded = encodeURIComponent(message);
   return `https://wa.me/${phone}?text=${encoded}`;
