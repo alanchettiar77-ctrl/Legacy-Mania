@@ -12,6 +12,8 @@ Security model reference. Update whenever an auth-relevant surface changes.
 
 `checkRateLimit(key, limit, windowMs)` (`src/lib/rate-limit.ts`) — per-instance, in-memory, best-effort (resets on cold start; not shared across serverless instances). Applied to: checkout (10/min/ip), media upload (30/min/admin), analytics (30/min/ip), notifications admin APIs (60/min/ip), branding + category admin APIs (60/min/ip).
 
+**Account lockout:** `login_attempts` table (migration 009) + `login-throttle-service.ts` — 5 consecutive failed logins for the same email lock it for 15 minutes, independent of and in addition to the per-IP limiter above. Locked and wrong-password responses are byte-identical (`401 {"error": "Invalid email or password"}`) — never reveal lockout state. On the failure that triggers lockout, a Supabase password-reset email is sent to the account once (not resent on subsequent blocked attempts).
+
 ## Upload policy
 
 MediaService only: PNG/JPG/WEBP, 2 MB max, sharp-validated (corrupt files rejected), UUID filenames (no path traversal / filename XSS), namespace whitelist. **SVG is rejected by design** — SVGs can embed scripts and are an XSS vector when served from the site origin.
@@ -37,6 +39,7 @@ See `API.md` — the section headers (Public / Customer / Admin) are the source 
 | 2026-07-20 | Open redirect on post-login navigation (`login` page + `/auth/redirect`) | `getSafeRedirect()` allow-lists relative paths only (`src/lib/utils.ts`) |
 | 2026-07-20 | `forgot-password` relayed Supabase's raw error text (latent enumeration risk) | Fixed generic message, matching `login`/`register` route pattern |
 | 2026-07-21 | Admin role-check logic duplicated 5x (drift risk — one copy wasn't fail-closed) | Consolidated to exported `getCallerRole()` in `admin-auth.ts`, used by all 5 call sites |
+| 2026-07-21 | No per-account brute-force ceiling (only a soft per-IP, per-instance limiter) | `login_attempts` table + `login-throttle-service.ts`: 5-consecutive-failure / 15-min lockout with progressive delay |
 
 ## Reporting
 

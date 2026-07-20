@@ -5,11 +5,13 @@
  */
 const mockSignIn = jest.fn();
 const mockSignUp = jest.fn();
+const mockResetPasswordForEmail = jest.fn();
 jest.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
     auth: {
       signInWithPassword: (...args: unknown[]) => mockSignIn(...args),
       signUp: (...args: unknown[]) => mockSignUp(...args),
+      resetPasswordForEmail: (...args: unknown[]) => mockResetPasswordForEmail(...args),
     },
   }),
 }));
@@ -18,6 +20,15 @@ const mockCheckRateLimit = jest.fn();
 jest.mock("@/lib/rate-limit", () => ({
   checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
   rateLimitResponse: jest.requireActual("@/lib/rate-limit").rateLimitResponse,
+}));
+
+const mockIsLocked = jest.fn();
+const mockGetProgressiveDelayMs = jest.fn();
+const mockRecordAttemptResult = jest.fn();
+jest.mock("@/lib/services/login-throttle-service", () => ({
+  isLocked: (...args: unknown[]) => mockIsLocked(...args),
+  getProgressiveDelayMs: (...args: unknown[]) => mockGetProgressiveDelayMs(...args),
+  recordAttemptResult: (...args: unknown[]) => mockRecordAttemptResult(...args),
 }));
 
 jest.mock("@/lib/services/audit-service", () => ({ recordAuditLog: jest.fn() }));
@@ -37,6 +48,8 @@ function req(path: string, body: unknown) {
 
 beforeEach(() => {
   mockCheckRateLimit.mockReturnValue({ allowed: true, remaining: 9, resetAt: Date.now() + 60_000 });
+  mockIsLocked.mockResolvedValue(false);
+  mockGetProgressiveDelayMs.mockResolvedValue(0);
 });
 afterEach(() => jest.clearAllMocks());
 
@@ -80,6 +93,43 @@ describe("POST /api/auth/login", () => {
   it("400 on non-JSON body", async () => {
     const bad = new NextRequest("http://localhost/api/auth/login", { method: "POST", body: "not json" });
     expect((await login(bad)).status).toBe(400);
+  });
+
+  it("401 generic error when the account is locked, without calling signInWithPassword", async () => {
+    mockIsLocked.mockResolvedValue(true);
+    const response = await login(req("login", { email: "a@b.com", password: "whatever1" }));
+    const body = await response.json();
+    expect(response.status).toBe(401);
+    expect(body).toEqual({ error: "Invalid email or password" });
+    expect(mockSignIn).not.toHaveBeenCalled();
+    expect(mockRecordAttemptResult).toHaveBeenCalledWith("a@b.com", expect.any(String), false);
+  });
+
+  it("does not resend the lockout email on repeated blocked attempts while already locked", async () => {
+    mockIsLocked.mockResolvedValue(true);
+    await login(req("login", { email: "a@b.com", password: "whatever1" }));
+    expect(mockResetPasswordForEmail).not.toHaveBeenCalled();
+  });
+
+  it("sends a reset-link email exactly once when a failed attempt newly triggers lockout", async () => {
+    mockIsLocked.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    mockSignIn.mockResolvedValue({ error: { message: "Invalid login credentials" } });
+    await login(req("login", { email: "a@b.com", password: "wrongpass" }));
+    expect(mockResetPasswordForEmail).toHaveBeenCalledTimes(1);
+    expect(mockResetPasswordForEmail).toHaveBeenCalledWith("a@b.com");
+  });
+
+  it("does not send a lockout email on an ordinary (non-locking) failed attempt", async () => {
+    mockIsLocked.mockResolvedValue(false);
+    mockSignIn.mockResolvedValue({ error: { message: "Invalid login credentials" } });
+    await login(req("login", { email: "a@b.com", password: "wrongpass" }));
+    expect(mockResetPasswordForEmail).not.toHaveBeenCalled();
+  });
+
+  it("records a successful attempt on successful login", async () => {
+    mockSignIn.mockResolvedValue({ error: null });
+    await login(req("login", { email: "a@b.com", password: "secret1" }));
+    expect(mockRecordAttemptResult).toHaveBeenCalledWith("a@b.com", expect.any(String), true);
   });
 });
 

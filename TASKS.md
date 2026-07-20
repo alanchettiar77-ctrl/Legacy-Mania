@@ -5,6 +5,9 @@ Pending and future work. AI Developer: check this before every session.
 > **Note:** The FAQ system (previously tracked here as in-progress on an unmerged worktree) has
 > since been merged to master. The follow-up item it surfaced (`/api/admin/analytics` had no
 > admin auth guard) was fixed 2026-07-19: requireAdmin + rate limit + audit logging.
+>
+> **Migration 009** (`login_attempts` table + cleanup cron) must be applied in the Supabase SQL
+> Editor before account lockout works live — same manual-apply step as migration 007.
 
 ---
 
