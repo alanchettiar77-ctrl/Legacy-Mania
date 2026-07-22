@@ -6,7 +6,10 @@ const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 2 * 1024 * 1024;
 
 export const MEDIA_NAMESPACES = {
-  banners: { bucket: "banners", recommendedWidth: 728, recommendedHeight: 90, public: true },
+  // Full-width homepage banner carousel (Phase 1 CMS). Desktop/mobile are separate
+  // uploads since they're different aspect ratios, not just responsive resizes.
+  "banner-desktop": { bucket: "banners", recommendedWidth: 1600, recommendedHeight: 600, public: true },
+  "banner-mobile": { bucket: "banners", recommendedWidth: 750, recommendedHeight: 1000, public: true },
   products: { bucket: "products", recommendedWidth: null, recommendedHeight: null, public: true },
   payments: { bucket: "payments", recommendedWidth: null, recommendedHeight: null, public: false },
   // Brand assets (logos, favicons, category icons). Reuses the public banners bucket —
