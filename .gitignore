@@ -35,3 +35,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# git worktrees (used by superpowers:using-git-worktrees — must stay outside .claude/,
+# whose contents jest.config.js excludes from test discovery)
+.worktrees
