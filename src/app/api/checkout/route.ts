@@ -20,6 +20,13 @@ export async function POST(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (user && !user.email_confirmed_at) {
+    return NextResponse.json(
+      { error: "Please verify your email before placing an order." },
+      { status: 403 }
+    );
+  }
+
   try {
     const result = await createOrder(parsed.data, user?.id ?? null);
     return NextResponse.json(result, { status: 201 });

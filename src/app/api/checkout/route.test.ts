@@ -88,11 +88,27 @@ describe("POST /api/checkout", () => {
 
   it("passes the signed-in user's id when a session exists", async () => {
     mockCheckRateLimit.mockReturnValue({ allowed: true, remaining: 10, resetAt: Date.now() + 1000 });
-    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: "user-1", email_confirmed_at: "2026-01-01T00:00:00Z" } },
+    });
     mockCreateOrder.mockResolvedValue({ orderId: "order-1", orderNumber: "LM-123", total: 500 });
 
     await POST(makeRequest(validBody));
 
     expect(mockCreateOrder).toHaveBeenCalledWith(expect.anything(), "user-1");
+  });
+
+  it("returns 403 and does not create an order for a signed-in but unverified user", async () => {
+    mockCheckRateLimit.mockReturnValue({ allowed: true, remaining: 10, resetAt: Date.now() + 1000 });
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: "user-1", email_confirmed_at: null } },
+    });
+
+    const response = await POST(makeRequest(validBody));
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error).toBeDefined();
+    expect(mockCreateOrder).not.toHaveBeenCalled();
   });
 });
