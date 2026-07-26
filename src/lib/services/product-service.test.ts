@@ -2,12 +2,14 @@ const mockInsertProduct = jest.fn();
 const mockUpdateProduct = jest.fn();
 const mockGetMaxDisplayOrder = jest.fn();
 const mockFindDisplayOrderConflict = jest.fn();
+const mockGetProduct = jest.fn();
 const mockReorderProducts = jest.fn();
 jest.mock("@/lib/repositories/product-repository", () => ({
   insertProduct: (...args: unknown[]) => mockInsertProduct(...args),
   updateProduct: (...args: unknown[]) => mockUpdateProduct(...args),
   getMaxDisplayOrder: (...args: unknown[]) => mockGetMaxDisplayOrder(...args),
   findDisplayOrderConflict: (...args: unknown[]) => mockFindDisplayOrderConflict(...args),
+  getProduct: (...args: unknown[]) => mockGetProduct(...args),
   reorderProducts: (...args: unknown[]) => mockReorderProducts(...args),
 }));
 
@@ -88,6 +90,16 @@ describe("editProduct display_order handling", () => {
     await editProduct("p1", { price: 150 });
 
     expect(mockFindDisplayOrderConflict).not.toHaveBeenCalled();
+  });
+
+  it("looks up the product's real category when category_id is omitted from the patch", async () => {
+    mockGetProduct.mockResolvedValue({ category_id: "cat-real" });
+    mockFindDisplayOrderConflict.mockResolvedValue(false);
+
+    await editProduct("p1", { display_order: 5 });
+
+    expect(mockGetProduct).toHaveBeenCalledWith("p1");
+    expect(mockFindDisplayOrderConflict).toHaveBeenCalledWith("cat-real", 5, "p1");
   });
 });
 

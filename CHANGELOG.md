@@ -350,7 +350,7 @@ See `TASKS.md` for the full list.
 
 - Migration `011_product_display_order.sql` — `display_order` integer column on `products` table (default 0, backfilled one counter per category preserving insertion order); single source of truth for product ordering
 - Admin UI: **Products → Edit** now shows Display Order field with auto-suggest (previous/next within category, current max+1), conflict warning if duplicate detected, live validation
-- Admin UI: **Products → Reorder** drag-and-drop/arrow-key product reorder per category, syncs via `POST /api/admin/products/reorder` (batch update, no rate limit to match sibling product routes)
+- Admin UI: **Products → Reorder** drag-and-drop product reorder across the admin product list, syncs via `POST /api/admin/products/reorder` (batch update, no rate limit to match sibling product routes)
 - Full sort option set now available in catalog and via `/api/products` query param: Display Order (default), Featured, Newest, Oldest, Price Low→High, Price High→Low, A-Z, Z-A
 
 ### Changed

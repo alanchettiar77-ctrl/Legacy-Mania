@@ -85,6 +85,30 @@ describe("product-repository display_order helpers", () => {
     expect(result).toBe(false);
   });
 
+  it("getProduct returns the row's category_id", async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => [{ category_id: "cat-real" }],
+    });
+    const { getProduct } = await import("@/lib/repositories/product-repository");
+
+    const result = await getProduct("p1");
+
+    expect(result).toEqual({ category_id: "cat-real" });
+    const [url] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(url).toContain("id=eq.p1");
+    expect(url).toContain("select=category_id");
+  });
+
+  it("getProduct returns null when the response is not ok", async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: false, json: async () => [] });
+    const { getProduct } = await import("@/lib/repositories/product-repository");
+
+    const result = await getProduct("missing");
+
+    expect(result).toBeNull();
+  });
+
   it("reorderProducts PATCHes each id with its new display_order", async () => {
     (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [{}] });
     const { reorderProducts } = await import("@/lib/repositories/product-repository");

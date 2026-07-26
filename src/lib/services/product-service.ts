@@ -3,6 +3,7 @@ import {
   updateProduct,
   getMaxDisplayOrder,
   findDisplayOrderConflict,
+  getProduct,
   reorderProducts as repoReorderProducts,
   type ProductWritePayload,
 } from "@/lib/repositories/product-repository";
@@ -34,7 +35,14 @@ export async function editProduct(
 ): Promise<EditProductResult> {
   let warning: string | undefined;
   if (payload.display_order !== undefined) {
-    const conflict = await findDisplayOrderConflict(payload.category_id ?? null, payload.display_order, id);
+    let categoryId: string | null;
+    if (payload.category_id !== undefined) {
+      categoryId = payload.category_id;
+    } else {
+      const current = await getProduct(id);
+      categoryId = current?.category_id ?? null;
+    }
+    const conflict = await findDisplayOrderConflict(categoryId, payload.display_order, id);
     if (conflict) {
       warning = buildDisplayOrderWarning(payload.display_order);
     }

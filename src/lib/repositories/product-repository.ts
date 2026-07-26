@@ -53,6 +53,17 @@ function categoryFilter(categoryId: string | null): string {
   return categoryId ? `category_id=eq.${encodeURIComponent(categoryId)}` : "category_id=is.null";
 }
 
+/** Fetches a single product's category_id (used to resolve the real category on partial patches). */
+export async function getProduct(id: string): Promise<{ category_id: string | null } | null> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(id)}&select=category_id&limit=1`, {
+    headers: HEADERS,
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return rows[0] ?? null;
+}
+
 /** Highest display_order currently used in a category (0 if empty) — used to suggest the next value. */
 export async function getMaxDisplayOrder(categoryId: string | null): Promise<number> {
   const res = await fetch(
