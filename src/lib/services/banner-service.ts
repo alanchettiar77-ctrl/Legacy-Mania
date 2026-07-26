@@ -56,7 +56,20 @@ export async function updateBannerById(
   patch: BannerUpdateInput,
   adminId: string
 ): Promise<BannerRow | null> {
-  return repoUpdate(id, { ...resolveCtaPrecedence(patch), updated_by: adminId });
+  // resolveCtaPrecedence only sees fields in this call's patch. A partial update that
+  // touches only cta_url or only category_id can't see the row's existing value for the
+  // other field, so the precedence check must run against the merged (current + patch)
+  // state, not the patch alone — otherwise a single-field edit can leave both set in the DB.
+  if ("cta_url" in patch || "category_id" in patch) {
+    const current = await getBanner(id);
+    if (!current) return null;
+    const merged = resolveCtaPrecedence({
+      cta_url: patch.cta_url ?? current.cta_url,
+      category_id: patch.category_id ?? current.category_id,
+    });
+    return repoUpdate(id, { ...patch, ...merged, updated_by: adminId });
+  }
+  return repoUpdate(id, { ...patch, updated_by: adminId });
 }
 
 export async function deleteBanner(id: string, adminId: string): Promise<boolean> {
