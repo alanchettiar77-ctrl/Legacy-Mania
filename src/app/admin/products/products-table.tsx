@@ -16,14 +16,26 @@ interface Product {
   price: number;
   compare_price: number | null;
   stock_quantity: number;
+  display_order: number;
   is_active: boolean;
   is_featured: boolean;
   is_new: boolean;
   category: { name: string } | null;
 }
 
+async function apiRequest(path: string, options?: RequestInit) {
+  const res = await fetch(path, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...options?.headers },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || "Request failed");
+  return body;
+}
+
 export default function ProductsTable({ initialProducts }: { initialProducts: Product[] }) {
   const [products, setProducts] = useState(initialProducts);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const toggleActive = async (id: string, current: boolean) => {
     const res = await fetch(`/api/admin/products/${id}`, {
@@ -46,17 +58,42 @@ export default function ProductsTable({ initialProducts }: { initialProducts: Pr
     await toggleActive(id, true);
   };
 
+  const persistOrder = async (next: Product[]) => {
+    setProducts(next);
+    try {
+      await apiRequest("/api/admin/products/reorder", {
+        method: "POST",
+        body: JSON.stringify({ ids: next.map((p) => p.id) }),
+      });
+    } catch {
+      toast.error("Failed to save new order");
+    }
+  };
+
+  const onDrop = (dropIndex: number) => {
+    if (dragIndex === null || dragIndex === dropIndex) return;
+    const next = [...products];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(dropIndex, 0, moved);
+    setDragIndex(null);
+    void persistOrder(next);
+  };
+
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
+              <th className="p-4 w-8" />
               <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Product
               </th>
               <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Category
+              </th>
+              <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Order
               </th>
               <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Price
@@ -73,13 +110,21 @@ export default function ProductsTable({ initialProducts }: { initialProducts: Pr
             </tr>
           </thead>
           <tbody>
-            {products.map((product) => (
+            {products.map((product, index) => (
               <tr
                 key={product.id}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("text/plain", String(index));
+                  setDragIndex(index);
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => onDrop(index)}
                 className={`border-b border-border last:border-0 hover:bg-accent/20 transition-colors ${
                   !product.is_active ? "opacity-50" : ""
                 }`}
               >
+                <td className="p-4 cursor-grab text-muted-foreground">⠿</td>
                 <td className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
@@ -109,6 +154,7 @@ export default function ProductsTable({ initialProducts }: { initialProducts: Pr
                 <td className="p-4 text-sm text-muted-foreground">
                   {product.category?.name || "—"}
                 </td>
+                <td className="p-4 text-sm text-muted-foreground">{product.display_order}</td>
                 <td className="p-4">
                   <p className="font-semibold text-sm">
                     {formatCurrency(product.price)}

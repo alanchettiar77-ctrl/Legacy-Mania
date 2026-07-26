@@ -22,6 +22,7 @@ export default async function AdminProductsPage() {
     price: number;
     compare_price: number | null;
     stock_quantity: number;
+    display_order: number;
     is_active: boolean;
     is_featured: boolean;
     is_new: boolean;
