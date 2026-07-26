@@ -1,6 +1,8 @@
 /**
  * @jest-environment node
  */
+export {};
+
 const originalFetch = global.fetch;
 
 beforeEach(() => {
