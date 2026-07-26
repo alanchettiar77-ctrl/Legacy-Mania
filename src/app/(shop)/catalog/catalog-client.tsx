@@ -19,10 +19,14 @@ interface CatalogClientProps {
 }
 
 const sortOptions = [
+  { value: "display_order", label: "Display Order" },
+  { value: "featured", label: "Featured" },
   { value: "newest", label: "Newest First" },
+  { value: "oldest", label: "Oldest First" },
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
   { value: "name_asc", label: "Name A-Z" },
+  { value: "name_desc", label: "Name Z-A" },
 ];
 
 export default function CatalogClient({
@@ -39,7 +43,7 @@ export default function CatalogClient({
   const searchParamsObj = useSearchParams();
   const [products] = useState<Product[]>(initialProducts);
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("newest");
+  const [sort, setSort] = useState(searchParamsObj.get("sort") ?? "display_order");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -50,14 +54,13 @@ export default function CatalogClient({
     return true;
   });
 
-  const sorted = [...filtered].sort((a, b) => {
-    switch (sort) {
-      case "price_asc": return a.price - b.price;
-      case "price_desc": return b.price - a.price;
-      case "name_asc": return a.name.localeCompare(b.name);
-      default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    }
-  });
+  const onSortChange = (value: string) => {
+    setSort(value);
+    const params = new URLSearchParams(searchParamsObj.toString());
+    params.set("sort", value);
+    params.delete("page"); // changing sort resets to page 1
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -170,7 +173,7 @@ export default function CatalogClient({
               <div className="relative">
                 <select
                   value={sort}
-                  onChange={(e) => setSort(e.target.value)}
+                  onChange={(e) => onSortChange(e.target.value)}
                   className="appearance-none pl-3 pr-8 py-2.5 rounded-xl bg-accent border border-border text-sm focus:outline-none focus:border-primary cursor-pointer"
                 >
                   {sortOptions.map((o) => (
@@ -221,12 +224,12 @@ export default function CatalogClient({
             {/* Result count */}
             <p className="text-sm text-muted-foreground mb-4">
               {search || selectedCategory
-                ? `${sorted.length} result${sorted.length !== 1 ? "s" : ""} found`
+                ? `${filtered.length} result${filtered.length !== 1 ? "s" : ""} found`
                 : `Showing ${initialProducts.length} of ${totalCount} products`}
             </p>
 
             {/* Products grid */}
-            {sorted.length === 0 ? (
+            {filtered.length === 0 ? (
               <div className="text-center py-20 text-muted-foreground">
                 <p className="text-lg font-medium">No products found</p>
                 <p className="text-sm mt-1">Try a different search or category</p>
@@ -239,7 +242,7 @@ export default function CatalogClient({
                     : "flex flex-col gap-4"
                 )}
               >
-                {sorted.map((product) => (
+                {filtered.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
