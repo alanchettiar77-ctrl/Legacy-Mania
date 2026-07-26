@@ -16,11 +16,15 @@ export interface EditProductResult {
   warning?: string;
 }
 
+function buildDisplayOrderWarning(displayOrder: number): string {
+  return `Display order ${displayOrder} is already used by another product in this category.`;
+}
+
 export async function createProduct(payload: ProductWritePayload): Promise<CreateProductResult> {
   const conflict = await findDisplayOrderConflict(payload.category_id, payload.display_order, undefined);
   const created = await insertProduct(payload);
   return conflict
-    ? { ...created, warning: `Display order ${payload.display_order} is already used by another product in this category.` }
+    ? { ...created, warning: buildDisplayOrderWarning(payload.display_order) }
     : created;
 }
 
@@ -32,7 +36,7 @@ export async function editProduct(
   if (payload.display_order !== undefined) {
     const conflict = await findDisplayOrderConflict(payload.category_id ?? null, payload.display_order, id);
     if (conflict) {
-      warning = `Display order ${payload.display_order} is already used by another product in this category.`;
+      warning = buildDisplayOrderWarning(payload.display_order);
     }
   }
   await updateProduct(id, payload);
