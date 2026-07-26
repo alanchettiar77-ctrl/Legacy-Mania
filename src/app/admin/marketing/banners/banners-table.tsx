@@ -27,6 +27,7 @@ export default function BannersTable({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<BannerRow | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   const openCreate = () => {
     setEditing(null);
@@ -45,6 +46,7 @@ export default function BannersTable({
   };
 
   const toggleActive = async (banner: BannerRow) => {
+    setPendingId(banner.id);
     try {
       const updated = await apiRequest(`/api/admin/banners/${banner.id}`, {
         method: "PATCH",
@@ -53,27 +55,35 @@ export default function BannersTable({
       setRows((prev) => prev.map((r) => (r.id === banner.id ? updated : r)));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update banner");
+    } finally {
+      setPendingId(null);
     }
   };
 
   const remove = async (banner: BannerRow) => {
     if (!confirm(`Delete "${banner.title}"? This can't be undone from the admin panel.`)) return;
+    setPendingId(banner.id);
     try {
       await apiRequest(`/api/admin/banners/${banner.id}`, { method: "DELETE" });
       setRows((prev) => prev.filter((r) => r.id !== banner.id));
       toast.success("Banner deleted");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete banner");
+    } finally {
+      setPendingId(null);
     }
   };
 
   const duplicate = async (banner: BannerRow) => {
+    setPendingId(banner.id);
     try {
       const copy = await apiRequest(`/api/admin/banners/${banner.id}/duplicate`, { method: "POST" });
       setRows((prev) => [...prev, copy]);
       toast.success("Banner duplicated");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to duplicate banner");
+    } finally {
+      setPendingId(null);
     }
   };
 
@@ -126,7 +136,10 @@ export default function BannersTable({
             <tr
               key={banner.id}
               draggable
-              onDragStart={() => setDragIndex(index)}
+              onDragStart={(e) => {
+                e.dataTransfer.setData("text/plain", String(index));
+                setDragIndex(index);
+              }}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => onDrop(index)}
               className={`border-b border-border last:border-0 hover:bg-accent/10 ${!banner.is_active ? "opacity-50" : ""}`}
@@ -144,16 +157,37 @@ export default function BannersTable({
               </td>
               <td className="p-3">
                 <div className="flex justify-end gap-2">
-                  <button type="button" onClick={() => toggleActive(banner)} aria-label="Toggle active" title="Toggle active">
+                  <button
+                    type="button"
+                    onClick={() => toggleActive(banner)}
+                    disabled={pendingId === banner.id}
+                    aria-label="Toggle active"
+                    title="Toggle active"
+                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     {banner.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                   </button>
-                  <button type="button" onClick={() => duplicate(banner)} aria-label="Duplicate" title="Duplicate">
+                  <button
+                    type="button"
+                    onClick={() => duplicate(banner)}
+                    disabled={pendingId === banner.id}
+                    aria-label="Duplicate"
+                    title="Duplicate"
+                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <Copy className="w-4 h-4" />
                   </button>
                   <button type="button" onClick={() => openEdit(banner)} aria-label="Edit" title="Edit">
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button type="button" onClick={() => remove(banner)} aria-label="Delete" title="Delete">
+                  <button
+                    type="button"
+                    onClick={() => remove(banner)}
+                    disabled={pendingId === banner.id}
+                    aria-label="Delete"
+                    title="Delete"
+                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
