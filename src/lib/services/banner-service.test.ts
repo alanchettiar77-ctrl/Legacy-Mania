@@ -94,6 +94,30 @@ describe("updateBannerById", () => {
     );
   });
 
+  it("respects an explicit cta_url: null clear alongside a new category_id, instead of falling back to the stale row value", async () => {
+    // Row currently has a CTA URL and no category.
+    mockRepo.getBanner.mockResolvedValue({
+      id: "b1",
+      cta_url: "/sale",
+      category_id: null,
+    } as never);
+    mockRepo.updateBanner.mockResolvedValue({ id: "b1" } as never);
+
+    // Admin explicitly clears the CTA URL while picking a category.
+    await updateBannerById(
+      "b1",
+      { cta_url: null, category_id: "cat-1" } as never,
+      "admin-1"
+    );
+
+    // The explicit null clear must stick, and the new category must not be
+    // dropped by precedence resolution against the stale cta_url.
+    expect(mockRepo.updateBanner).toHaveBeenCalledWith(
+      "b1",
+      expect.objectContaining({ cta_url: null, category_id: "cat-1" })
+    );
+  });
+
   it("skips getBanner when the patch touches neither cta_url nor category_id (optimization)", async () => {
     mockRepo.updateBanner.mockResolvedValue({ id: "b1" } as never);
 

@@ -64,8 +64,8 @@ export async function updateBannerById(
     const current = await getBanner(id);
     if (!current) return null;
     const merged = resolveCtaPrecedence({
-      cta_url: patch.cta_url ?? current.cta_url,
-      category_id: patch.category_id ?? current.category_id,
+      cta_url: "cta_url" in patch ? patch.cta_url : current.cta_url,
+      category_id: "category_id" in patch ? patch.category_id : current.category_id,
     });
     return repoUpdate(id, { ...patch, ...merged, updated_by: adminId });
   }
