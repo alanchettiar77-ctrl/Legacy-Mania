@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { applyProductSort } from "@/lib/services/product-service";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get("category");
   const featured = searchParams.get("featured");
   const search = searchParams.get("search");
-  const sort = searchParams.get("sort") || "newest";
+  const sort = searchParams.get("sort");
   const offset = (page - 1) * limit;
 
   let query = supabase
@@ -22,12 +23,7 @@ export async function GET(request: NextRequest) {
   if (featured === "true") query = query.eq("is_featured", true);
   if (search) query = query.ilike("name", `%${search}%`);
 
-  switch (sort) {
-    case "price_asc": query = query.order("price", { ascending: true }); break;
-    case "price_desc": query = query.order("price", { ascending: false }); break;
-    case "name_asc": query = query.order("name", { ascending: true }); break;
-    default: query = query.order("created_at", { ascending: false });
-  }
+  query = applyProductSort(query, sort);
 
   const { data, count, error } = await query.range(offset, offset + limit - 1);
 

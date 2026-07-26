@@ -1,0 +1,64 @@
+/**
+ * @jest-environment node
+ */
+const mockOrder = jest.fn();
+const mockRange = jest.fn();
+const mockEq = jest.fn();
+const mockIlike = jest.fn();
+const mockSelect = jest.fn();
+const mockFrom = jest.fn();
+
+function makeChainable() {
+  const chain: Record<string, jest.Mock> = {
+    select: mockSelect,
+    eq: mockEq,
+    ilike: mockIlike,
+    order: mockOrder,
+    range: mockRange,
+  };
+  Object.values(chain).forEach((fn) => fn.mockReturnValue(chain));
+  mockRange.mockResolvedValue({ data: [], count: 0, error: null });
+  return chain;
+}
+
+jest.mock("@/lib/supabase/server", () => ({
+  createClient: async () => ({ from: (...args: unknown[]) => { mockFrom(...args); return makeChainable(); } }),
+}));
+
+import { NextRequest } from "next/server";
+import { GET } from "@/app/api/products/route";
+
+afterEach(() => jest.clearAllMocks());
+
+function req(query: string) {
+  return new NextRequest(`http://localhost/api/products${query}`);
+}
+
+describe("GET /api/products sort handling", () => {
+  it("defaults to display_order asc, created_at asc when no sort param is given", async () => {
+    await GET(req(""));
+    expect(mockOrder).toHaveBeenCalledWith("display_order", { ascending: true });
+    expect(mockOrder).toHaveBeenCalledWith("created_at", { ascending: true });
+  });
+
+  it("sorts by display_order explicitly", async () => {
+    await GET(req("?sort=display_order"));
+    expect(mockOrder).toHaveBeenCalledWith("display_order", { ascending: true });
+  });
+
+  it("sorts featured first via the featured sort mode", async () => {
+    await GET(req("?sort=featured"));
+    expect(mockOrder).toHaveBeenCalledWith("is_featured", { ascending: false });
+    expect(mockOrder).toHaveBeenCalledWith("display_order", { ascending: true });
+  });
+
+  it("sorts oldest first", async () => {
+    await GET(req("?sort=oldest"));
+    expect(mockOrder).toHaveBeenCalledWith("created_at", { ascending: true });
+  });
+
+  it("sorts name descending (Z-A)", async () => {
+    await GET(req("?sort=name_desc"));
+    expect(mockOrder).toHaveBeenCalledWith("name", { ascending: false });
+  });
+});
