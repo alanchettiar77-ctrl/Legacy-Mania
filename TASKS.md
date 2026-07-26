@@ -6,11 +6,10 @@ Pending and future work. AI Developer: check this before every session.
 > since been merged to master. The follow-up item it surfaced (`/api/admin/analytics` had no
 > admin auth guard) was fixed 2026-07-19: requireAdmin + rate limit + audit logging.
 >
-> **Migration 009** (`login_attempts` table + cleanup cron) must be applied in the Supabase SQL
-> Editor before account lockout works live — same manual-apply step as migration 007.
->
-> **Migration 010** (`banners` table) must be applied in the Supabase SQL Editor after this branch
-> is merged — Phase 1 of the 10-phase CMS initiative (Homepage Banner Management) is complete as of 2026-07-26.
+> **Migrations 009 and 010 are both applied and confirmed live** (verified via SQL Editor:
+> `login_attempts` table present with cron job scheduled; `banners` table present with both RLS
+> policies). Migrations 001-010 are all live as of 2026-07-26. Phase 1 of the 10-phase CMS
+> initiative (Homepage Banner Management) is complete, merged to master (`f00ea3a`), and now live.
 
 ---
 
