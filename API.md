@@ -8,7 +8,7 @@ phases are tracked in `ROADMAP.md`, not documented here until they exist.
 | Method | Path | Description |
 |---|---|---|
 | GET | `/api/faqs` | Active FAQs, ordered by `display_order` |
-| GET | `/api/products` | Product listing |
+| GET | `/api/products` | Product listing. Query params: `sort` (`display_order` \| `featured` \| `newest` \| `oldest` \| `price_asc` \| `price_desc` \| `name_asc` \| `name_desc`, default `display_order`); `category_id` (filter by category); `search` (search text); page/limit (pagination). Default sort is `display_order ASC, created_at ASC` within each category. |
 | GET | `/api/categories` | Flat list of active categories |
 | GET | `/api/categories/tree` | Nested category tree (parent → children) |
 | POST | `/api/newsletter` | Newsletter signup |
@@ -41,6 +41,7 @@ phases are tracked in `ROADMAP.md`, not documented here until they exist.
 | GET/PATCH | `/api/admin/branding` | Brand asset slots (logo, favicon, OG/Twitter/PWA images) + `logo_hidden`. PATCH with `""` clears a slot back to default. Audit-logged with old+new values. |
 | PATCH | `/api/admin/categories/order` | Body `{ ids: uuid[] }` — rewrites category `display_order` |
 | PATCH | `/api/admin/categories/:id/branding` | Category `icon_url`/`appearance`/`is_featured`/`show_on_homepage`/`is_active` |
+| POST | `/api/admin/products/reorder` | Body `{ ids: string[] }` — rewrites product `display_order`. No rate limit or audit log (matches `/api/admin/products` sibling route behavior). `requireAdmin()` only. |
 | PATCH/DELETE | `/api/admin/faqs/:id` | Update/delete a FAQ |
 | POST | `/api/media/upload` | Upload a file. Form fields: `file` (binary), `namespace` (`"banner-desktop"` \| `"banner-mobile"` \| `"products"` \| `"branding"`). Returns `201` with `{ path, publicUrl, dimensionWarning }`. Rate-limited (30/min per admin). PNG/JPG/WEBP only, 2 MB max — SVG rejected (XSS risk). |
 | DELETE | `/api/media/:namespace/:filename` | Delete an uploaded file by its storage path. |

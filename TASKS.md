@@ -6,10 +6,12 @@ Pending and future work. AI Developer: check this before every session.
 > since been merged to master. The follow-up item it surfaced (`/api/admin/analytics` had no
 > admin auth guard) was fixed 2026-07-19: requireAdmin + rate limit + audit logging.
 >
-> **Migrations 009 and 010 are both applied and confirmed live** (verified via SQL Editor:
-> `login_attempts` table present with cron job scheduled; `banners` table present with both RLS
-> policies). Migrations 001-010 are all live as of 2026-07-26. Phase 1 of the 10-phase CMS
+> **Migrations 001-010 are all live as of 2026-07-26.** Verified via SQL Editor:
+> `login_attempts` table present with cron job scheduled (migration 009); `banners` table present with both RLS
+> policies (migration 010). Phase 1 of the 10-phase CMS
 > initiative (Homepage Banner Management) is complete, merged to master (`f00ea3a`), and now live.
+>
+> **Migration 011 (`product_display_order`) is written, not yet applied.** It adds `display_order` integer column to `products` (default 0, backfilled per category maintaining insertion order), making it the canonical default sort across catalog/category/search/featured products and `/api/products`. Will be applied to live Supabase database via manual SQL Editor step after merge (per established process for data-altering migrations).
 
 ---
 

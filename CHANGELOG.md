@@ -336,3 +336,28 @@ See `TASKS.md` for the full list.
 ### Verified
 
 - Full test suite: 40 suites / 207 tests passing (20 new); `npx tsc --noEmit` clean
+
+---
+
+## [0.11.0] — 2026-07-26 — Product Display Order & Catalog Sorting
+
+### Fixed — Catalog Ordering
+
+- Catalog, category, search, and featured product pages now default to `display_order ASC` (within category, using `created_at ASC` as tie-break) instead of `created_at DESC` — eliminates non-deterministic reverse-insertion-order display and makes product order predictable/admin-controllable
+- `/api/products` now defaults to the same sort order regardless of caller; `created_at DESC` sorting permanently removed (was preventing canonical sort from being reflected in API responses)
+
+### Added
+
+- Migration `011_product_display_order.sql` — `display_order` integer column on `products` table (default 0, backfilled one counter per category preserving insertion order); single source of truth for product ordering
+- Admin UI: **Products → Edit** now shows Display Order field with auto-suggest (previous/next within category, current max+1), conflict warning if duplicate detected, live validation
+- Admin UI: **Products → Reorder** drag-and-drop/arrow-key product reorder per category, syncs via `POST /api/admin/products/reorder` (batch update, no rate limit to match sibling product routes)
+- Full sort option set now available in catalog and via `/api/products` query param: Display Order (default), Featured, Newest, Oldest, Price Low→High, Price High→Low, A-Z, Z-A
+
+### Changed
+
+- `GET /api/products` — `sort` query param now accepts full 8-value set; default changed from none to `display_order`
+
+### Verified
+
+- Full test suite: 43 suites / 225 tests passing (18 new: Product sort service tests, reorder API tests, form validation with conflict detection); `npx tsc --noEmit` clean
+- Manual catalog verification: insertion order (Bulbasaur → Ivysaur → Venusaur → Squirtle → Wartortle per category) now renders consistently without admin configuration
