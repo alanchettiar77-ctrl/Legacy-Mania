@@ -29,7 +29,7 @@ describe("DELETE /api/media/:path", () => {
     const forbidden = NextResponse.json({ error: "Forbidden" }, { status: 403 });
     mockRequireAdmin.mockResolvedValue({ ok: false, response: forbidden });
 
-    const { req, params } = makeRequest(["banners", "x.png"]);
+    const { req, params } = makeRequest(["branding", "x.png"]);
     const response = await DELETE(req, { params });
 
     expect(response.status).toBe(403);
@@ -47,7 +47,7 @@ describe("DELETE /api/media/:path", () => {
   it("returns 400 when there is no filename segment", async () => {
     mockRequireAdmin.mockResolvedValue({ ok: true, userId: "admin-1" });
 
-    const { req, params } = makeRequest(["banners"]);
+    const { req, params } = makeRequest(["branding"]);
     const response = await DELETE(req, { params });
 
     expect(response.status).toBe(400);
@@ -57,11 +57,11 @@ describe("DELETE /api/media/:path", () => {
     mockRequireAdmin.mockResolvedValue({ ok: true, userId: "admin-1" });
     mockDeleteMedia.mockResolvedValue(undefined);
 
-    const { req, params } = makeRequest(["banners", "x.png"]);
+    const { req, params } = makeRequest(["branding", "x.png"]);
     const response = await DELETE(req, { params });
     const body = await response.json();
 
-    expect(mockDeleteMedia).toHaveBeenCalledWith("banners/x.png", "banners");
+    expect(mockDeleteMedia).toHaveBeenCalledWith("branding/x.png", "branding");
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
   });
@@ -70,7 +70,7 @@ describe("DELETE /api/media/:path", () => {
     mockRequireAdmin.mockResolvedValue({ ok: true, userId: "admin-1" });
     mockDeleteMedia.mockRejectedValue(new Error("Storage bucket unavailable"));
 
-    const { req, params } = makeRequest(["banners", "x.png"]);
+    const { req, params } = makeRequest(["branding", "x.png"]);
     const response = await DELETE(req, { params });
     const body = await response.json();
 

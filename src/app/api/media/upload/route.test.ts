@@ -49,7 +49,7 @@ describe("POST /api/media/upload", () => {
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     });
 
-    const response = await POST(makeUploadRequest("data", "banners"));
+    const response = await POST(makeUploadRequest("data", "branding"));
 
     expect(response.status).toBe(401);
   });
@@ -58,7 +58,7 @@ describe("POST /api/media/upload", () => {
     mockRequireAdmin.mockResolvedValue({ ok: true, userId: "admin-1" });
     mockCheckRateLimit.mockReturnValue({ allowed: false, remaining: 0, resetAt: Date.now() + 1000 });
 
-    const response = await POST(makeUploadRequest("data", "banners"));
+    const response = await POST(makeUploadRequest("data", "branding"));
 
     expect(response.status).toBe(429);
   });
@@ -90,7 +90,7 @@ describe("POST /api/media/upload", () => {
     mockCheckRateLimit.mockReturnValue({ allowed: true, remaining: 10, resetAt: Date.now() + 1000 });
     mockValidateFile.mockResolvedValue({ valid: false, error: "Unsupported file type" });
 
-    const response = await POST(makeUploadRequest("data", "banners"));
+    const response = await POST(makeUploadRequest("data", "branding"));
     const body = await response.json();
 
     expect(response.status).toBe(400);
@@ -103,7 +103,7 @@ describe("POST /api/media/upload", () => {
     mockValidateFile.mockResolvedValue({ valid: true, dimensionWarning: undefined });
     mockUploadMedia.mockResolvedValue({ path: "banners/x.png", publicUrl: "https://example.com/x.png" });
 
-    const response = await POST(makeUploadRequest("data", "banners"));
+    const response = await POST(makeUploadRequest("data", "branding"));
     const body = await response.json();
 
     expect(response.status).toBe(201);
@@ -118,7 +118,7 @@ describe("POST /api/media/upload", () => {
     mockValidateFile.mockResolvedValue({ valid: true, dimensionWarning: undefined });
     mockUploadMedia.mockRejectedValue(new Error("Storage bucket unavailable"));
 
-    const response = await POST(makeUploadRequest("data", "banners"));
+    const response = await POST(makeUploadRequest("data", "branding"));
     const body = await response.json();
 
     expect(response.status).toBe(500);
