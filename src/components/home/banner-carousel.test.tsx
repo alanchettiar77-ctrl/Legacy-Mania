@@ -67,6 +67,46 @@ describe("BannerCarousel", () => {
 
   it("uses alt_text on the banner image", () => {
     render(<BannerCarousel banners={[makeBanner()]} />);
-    expect(screen.getByAltText("Summer sale")).toBeInTheDocument();
+    const images = screen.getAllByAltText("Summer sale");
+    expect(images.length).toBeGreaterThan(0);
+    images.forEach((img) => expect(img).toBeInTheDocument());
+  });
+
+  it("renders separate desktop and mobile images using mobile_image_url when set", () => {
+    const { container } = render(
+      <BannerCarousel
+        banners={[
+          makeBanner({
+            desktop_image_url: "https://example.com/desktop.webp",
+            mobile_image_url: "https://example.com/mobile.webp",
+          }),
+        ]}
+      />
+    );
+    const images = Array.from(container.querySelectorAll("img"));
+    expect(images.length).toBe(2);
+
+    const srcs = images.map((img) => img.getAttribute("src") ?? "");
+    expect(srcs.some((src) => src.includes(encodeURIComponent("https://example.com/desktop.webp")) || src.includes("desktop.webp"))).toBe(true);
+    expect(srcs.some((src) => src.includes(encodeURIComponent("https://example.com/mobile.webp")) || src.includes("mobile.webp"))).toBe(true);
+  });
+
+  it("falls back to desktop_image_url for the mobile image when mobile_image_url is null", () => {
+    const { container } = render(
+      <BannerCarousel
+        banners={[
+          makeBanner({
+            desktop_image_url: "https://example.com/desktop.webp",
+            mobile_image_url: null,
+          }),
+        ]}
+      />
+    );
+    const images = Array.from(container.querySelectorAll("img"));
+    expect(images.length).toBe(2);
+    images.forEach((img) => {
+      const src = img.getAttribute("src") ?? "";
+      expect(src.includes("desktop.webp")).toBe(true);
+    });
   });
 });

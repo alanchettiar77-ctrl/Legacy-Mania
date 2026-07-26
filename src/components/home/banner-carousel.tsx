@@ -41,14 +41,24 @@ export default function BannerCarousel({ banners }: { banners: BannerRow[] }) {
                   title={banner.image_title ?? undefined}
                   aria-label={banner.aria_label ?? undefined}
                   fill
-                  priority={index === 0}
-                  className="object-cover"
+                  priority={i === 0}
+                  className="object-cover hidden md:block"
+                  sizes="100vw"
+                />
+                <Image
+                  src={banner.mobile_image_url ?? banner.desktop_image_url}
+                  alt={banner.alt_text}
+                  title={banner.image_title ?? undefined}
+                  aria-label={banner.aria_label ?? undefined}
+                  fill
+                  priority={i === 0}
+                  className="object-cover md:hidden block"
                   sizes="100vw"
                 />
                 {banner.overlay_enabled && (
                   <div className="absolute inset-0 bg-black" style={{ opacity: banner.overlay_opacity }} />
                 )}
-                <BannerCopy banner={banner} href={href} />
+                <BannerCopy banner={banner} href={href} isActive={i === index} />
               </motion.div>
             );
           })}
@@ -74,10 +84,21 @@ export default function BannerCarousel({ banners }: { banners: BannerRow[] }) {
   );
 }
 
-function BannerCopy({ banner, href }: { banner: BannerRow; href: string }) {
+function BannerCopy({
+  banner,
+  href,
+  isActive,
+}: {
+  banner: BannerRow;
+  href: string;
+  isActive: boolean;
+}) {
   if (!banner.title && !banner.subtitle && !banner.cta_text) return null;
   return (
-    <div className="absolute inset-0 flex flex-col items-start justify-center gap-3 px-6 md:px-16 z-10">
+    <div
+      className="absolute inset-0 flex flex-col items-start justify-center gap-3 px-6 md:px-16 z-10"
+      aria-hidden={isActive ? undefined : true}
+    >
       {banner.title && (
         <h2 className="text-2xl md:text-4xl font-bold text-white drop-shadow-lg">{banner.title}</h2>
       )}
@@ -85,6 +106,7 @@ function BannerCopy({ banner, href }: { banner: BannerRow; href: string }) {
       {banner.cta_text && (
         <Link
           href={href}
+          tabIndex={isActive ? undefined : -1}
           className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 rounded-xl transition-all"
         >
           {banner.cta_text}
