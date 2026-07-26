@@ -41,7 +41,7 @@ export default function CatalogClient({
   const router = useRouter();
   const pathname = usePathname();
   const searchParamsObj = useSearchParams();
-  const [products] = useState<Product[]>(initialProducts);
+  const products = initialProducts;
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState(searchParamsObj.get("sort") ?? "display_order");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
