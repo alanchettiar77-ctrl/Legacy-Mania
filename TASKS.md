@@ -8,6 +8,9 @@ Pending and future work. AI Developer: check this before every session.
 >
 > **Migration 009** (`login_attempts` table + cleanup cron) must be applied in the Supabase SQL
 > Editor before account lockout works live — same manual-apply step as migration 007.
+>
+> **Migration 010** (`banners` table) must be applied in the Supabase SQL Editor after this branch
+> is merged — Phase 1 of the 10-phase CMS initiative (Homepage Banner Management) is complete as of 2026-07-26.
 
 ---
 
