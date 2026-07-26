@@ -20,6 +20,7 @@ export interface ProductWritePayload {
   saga: string | null;
   collection: string | null;
   stock_quantity: number;
+  display_order: number;
   sku: string | null;
   is_active: boolean;
   is_featured: boolean;
@@ -46,4 +47,48 @@ export async function updateProduct(id: string, payload: Partial<ProductWritePay
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`Failed to update product: ${res.status}`);
+}
+
+function categoryFilter(categoryId: string | null): string {
+  return categoryId ? `category_id=eq.${encodeURIComponent(categoryId)}` : "category_id=is.null";
+}
+
+/** Highest display_order currently used in a category (0 if empty) — used to suggest the next value. */
+export async function getMaxDisplayOrder(categoryId: string | null): Promise<number> {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/products?${categoryFilter(categoryId)}&select=display_order&order=display_order.desc&limit=1`,
+    { headers: HEADERS, cache: "no-store" }
+  );
+  if (!res.ok) return 0;
+  const rows = await res.json();
+  return rows?.[0]?.display_order ?? 0;
+}
+
+/** True if another active product in the same category already uses this display_order. */
+export async function findDisplayOrderConflict(
+  categoryId: string | null,
+  displayOrder: number,
+  excludeId?: string
+): Promise<boolean> {
+  const params = new URLSearchParams();
+  params.set("select", "id");
+  params.set("display_order", `eq.${displayOrder}`);
+  if (excludeId) params.set("id", `neq.${excludeId}`);
+  const url = `${SUPABASE_URL}/rest/v1/products?${categoryFilter(categoryId)}&${params.toString()}`;
+  const res = await fetch(url, { headers: HEADERS, cache: "no-store" });
+  if (!res.ok) return false;
+  const rows = await res.json();
+  return rows.length > 0;
+}
+
+/** Rewrites display_order to match the given id order (0..n-1). */
+export async function reorderProducts(ids: string[]): Promise<void> {
+  for (let i = 0; i < ids.length; i++) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(ids[i])}`, {
+      method: "PATCH",
+      headers: HEADERS,
+      body: JSON.stringify({ display_order: i }),
+    });
+    if (!res.ok) throw new Error(`Failed to reorder product ${ids[i]}: ${res.status}`);
+  }
 }
