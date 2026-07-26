@@ -237,4 +237,58 @@ Implemented via subagent-driven development in an isolated worktree (`.claude/wo
 
 ---
 
-*Updated: 2026-07-05*
+## [2026-07-26] — v0.11.1 — Catalog Pagination Fix & Admin Authorization Regression Coverage ✅
+
+### Type
+Production Hardening — Two Reported Launch Blockers
+
+### Status
+✅ Full test suite (82 suites / 434 tests) and `tsc --noEmit` pass. Both blockers investigated via root-cause analysis before any fix was written (per systematic-debugging).
+
+### Bug 1: Catalog pagination showed the same 24 products on every page
+**Root cause:** `CatalogClient` (`src/app/(shop)/catalog/catalog-client.tsx`) copied the
+`initialProducts` prop into `useState` on mount and never updated it. The parent Server
+Component (`catalog/page.tsx`, `catalog/[slug]/page.tsx`) already computed the correct
+`range()`/offset per page and re-rendered with the right slice on every navigation — the
+server-side logic from the earlier product-display-order fix was never broken. But
+`router.push` to a new `?page=` doesn't remount the client component, so React kept the
+frozen first-mount state forever; the URL and the `totalCount` (read straight from props,
+not state) updated correctly while the rendered list didn't.
+**Fix:** removed the redundant `useState`, render `initialProducts` directly.
+**Tests added:** `catalog-client.test.tsx` (confirmed to fail on the pre-fix code, pass on
+the fix), `e2e/catalog-pagination.spec.ts`.
+
+### Bug 2 (reported, not reproducible): `/account` → `/admin` authorization bypass
+Audited every layer named in the report — `middleware.ts`, `requireAdmin()`, every
+`/api/admin/*` route, Supabase RLS. All three layers already fail closed: middleware
+redirects non-admins away from `/admin` server-side before any page renders, every admin API
+route rejects with 401/403 via the shared `requireAdmin()` helper, and RLS gates every admin
+table via `is_admin()`. This was hardened in commits predating this session
+(`12007f7`, `83ba3f0`, `28d18ec`, `2e41c5f`, 2026-07-04 to 2026-07-21). No fix was made for a
+vulnerability that doesn't exist in the current codebase — instead, added regression tests so
+this specific bypass path can never silently regress:
+- `src/lib/supabase/middleware.test.ts` (new — this file had zero test coverage before today)
+- A `route.test.ts` for the 9 admin API routes that had no dedicated 401/403 test:
+  `branding`, `categories/order`, `categories/[id]/branding`, `categories/[id]`,
+  `notifications/bulk`, `notifications/display-settings`, `notifications/reorder`,
+  `notifications/[id]/duplicate`, `notifications/[id]`
+
+### Files Modified
+- `src/app/(shop)/catalog/catalog-client.tsx` (the fix)
+
+### Files Added
+- `src/app/(shop)/catalog/catalog-client.test.tsx`, `e2e/catalog-pagination.spec.ts`,
+  `src/lib/supabase/middleware.test.ts`, and 9 `route.test.ts` files under `src/app/api/admin/`
+
+### Next Steps
+- User to confirm in an incognito window against the live deployment that (a) pagination now
+  shows different products per page and (b) the `/admin` bypass still cannot be reproduced —
+  if it can, capture exactly what renders (redirect? blank? real admin UI?) for further
+  investigation, since it doesn't reproduce against the current source.
+- Minor, non-blocking: `src/app/api/admin/admins/route.ts` inlines its own auth check instead
+  of calling the shared `requireAdmin()` helper (same correctness, just inconsistent with the
+  DRY refactor other admin routes went through) — worth aligning later.
+
+---
+
+*Updated: 2026-07-26*

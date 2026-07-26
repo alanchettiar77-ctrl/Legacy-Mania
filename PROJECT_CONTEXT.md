@@ -169,6 +169,7 @@ Admin can add unlimited categories and subcategories from `/admin/categories`.
 - CSRF: Supabase handles via JWT tokens
 - API authorization: every `/api/admin/*` route calls the central `requireAdmin()` helper (401/403), sensitive routes rate-limited via `checkRateLimit()`, admin access audit-logged via `AuditService` (see `SECURITY.md`)
 - `/api/admin/analytics` secured 2026-07-19 (was anonymous): requireAdmin + 30/min/IP rate limit + view/denied audit events
+- 2026-07-26: full authorization audit run against a reported `/account`→`/admin` bypass report — not reproducible (middleware, `requireAdmin()`, and RLS all already fail closed). Locked in with regression tests: `src/lib/supabase/middleware.test.ts` (page-level guard) + a dedicated `route.test.ts` per `/api/admin/*` route (API-level guard). See CHANGELOG 0.11.1.
 
 ---
 

@@ -23,6 +23,10 @@ phases are tracked in `ROADMAP.md`, not documented here until they exist.
 
 ## Admin (`requireAdmin()` required)
 
+Every route below is regression-tested for 401 (anonymous) / 403 (authenticated, non-admin) via
+a dedicated `route.test.ts`; page-level access to `/admin/*` is separately covered by
+`src/lib/supabase/middleware.test.ts`. See CHANGELOG 0.11.1.
+
 | Method | Path | Description |
 |---|---|---|
 | GET/POST/DELETE | `/api/admin/admins` | Manage admin accounts |

@@ -360,4 +360,24 @@ See `TASKS.md` for the full list.
 ### Verified
 
 - Full test suite: 43 suites / 225 tests passing (18 new: Product sort service tests, reorder API tests, form validation with conflict detection); `npx tsc --noEmit` clean
+
+---
+
+## [0.11.1] — 2026-07-26 — Catalog Pagination Fix & Admin Authorization Regression Coverage
+
+### Fixed — Catalog Pagination
+
+- `CatalogClient` (`src/app/(shop)/catalog/catalog-client.tsx`) copied `initialProducts` into `useState` on mount and never updated it. Navigating to a new `?page=` re-rendered the parent Server Component with the correct slice (URL and `totalCount` both updated correctly), but the client component kept rendering its frozen first-mount state — so every page showed the same first 24 products. Root cause was purely client-side; server-side `range()`/offset logic (from prior product-display-order work) was already correct. Fix: render `initialProducts` directly instead of copying it into state. Shared by `/catalog` and `/catalog/[slug]` (both use the same component).
+
+### Added — Regression Coverage
+
+- `src/app/(shop)/catalog/catalog-client.test.tsx` — asserts a prop update (simulating a page navigation) replaces the rendered product list; verified this test fails against the pre-fix code and passes against the fix
+- `e2e/catalog-pagination.spec.ts` — Playwright spec confirming page 2 and page 3 render different products than the pages before them on the live catalog
+- Full admin-authorization audit performed against a reported `/account`→`/admin` bypass — **not reproducible**: `middleware.ts`'s `updateSession()` already redirects non-admins away from `/admin` server-side, every `/api/admin/*` route already calls `requireAdmin()`, and RLS already gates every admin table via `is_admin()`. This was hardened in earlier commits (`12007f7`, `83ba3f0`, `28d18ec`, `2e41c5f`) predating this session. Added regression tests to lock in that already-correct behavior rather than leave it uncovered:
+  - `src/lib/supabase/middleware.test.ts` (new) — covers unauth `/admin`→`/login`, customer `/admin`→`/account` (the core bypass regression), admin `/admin` passthrough, unauth `/account`→`/login`, authenticated `/account` passthrough
+  - New `route.test.ts` for the 9 admin API routes that previously had no dedicated 401/403 test: `branding`, `categories/order`, `categories/[id]/branding`, `categories/[id]`, `notifications/bulk`, `notifications/display-settings`, `notifications/reorder`, `notifications/[id]/duplicate`, `notifications/[id]`
+
+### Verified
+
+- Full test suite: 82 suites / 434 tests passing (24 new); `npx tsc --noEmit` clean
 - Manual catalog verification: insertion order (Bulbasaur → Ivysaur → Venusaur → Squirtle → Wartortle per category) now renders consistently without admin configuration

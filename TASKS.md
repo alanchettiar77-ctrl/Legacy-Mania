@@ -11,7 +11,14 @@ Pending and future work. AI Developer: check this before every session.
 > policies (migration 010). Phase 1 of the 10-phase CMS
 > initiative (Homepage Banner Management) is complete, merged to master (`f00ea3a`), and now live.
 >
-> **Migration 011 (`product_display_order`) is written, not yet applied.** It adds `display_order` integer column to `products` (default 0, backfilled per category maintaining insertion order), making it the canonical default sort across catalog/category/search/featured products and `/api/products`. Will be applied to live Supabase database via manual SQL Editor step after merge (per established process for data-altering migrations).
+> **Migration 011 (`product_display_order`) is live as of 2026-07-26.** Adds `display_order` integer column to `products` (default 0, backfilled per category maintaining insertion order), the canonical default sort across catalog/category/search/featured products and `/api/products`.
+>
+> **2026-07-26 (later same day):** fixed a catalog pagination bug (`CatalogClient` froze on
+> page-1 products across navigation — client-side `useState` bug, unrelated to migration 011's
+> server-side sort/offset logic, which was already correct). Also audited a reported
+> `/account`→`/admin` authorization bypass — not reproducible against current code (already
+> fails closed at middleware, `requireAdmin()`, and RLS). Both are now regression-tested; see
+> CHANGELOG 0.11.1.
 
 ---
 

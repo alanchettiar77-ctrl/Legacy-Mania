@@ -44,3 +44,15 @@ rules) → `src/app/api/**/route.ts` (thin — auth, validate, call one service 
   separate Catalog table; `CatalogService` just reads that same tree.
 - **Migrations are applied manually** via the Supabase dashboard SQL Editor — there is no
   Supabase CLI/local config in this repo.
+- ~~Catalog pagination froze on page-1 products~~ — **fixed 2026-07-26**. Gotcha to remember:
+  a Client Component that does `useState(propFromServer)` to "seed" local state from a Server
+  Component prop will NOT re-sync on a client-side navigation that only changes a search param —
+  React preserves the component instance and its state across that re-render. If the prop is
+  server-computed per-request (pagination, sort, filters) and never mutated locally, don't copy
+  it into `useState` at all — read the prop directly.
+- **Admin authorization (`/admin`, `/api/admin/*`, RLS) was audited end-to-end 2026-07-26** against
+  a reported `/account`→`/admin` bypass — not reproducible; already fails closed at all three
+  layers (middleware, `requireAdmin()`, `is_admin()` RLS). Now regression-tested
+  (`src/lib/supabase/middleware.test.ts` + a `route.test.ts` per admin route). If a future report
+  of this bypass surfaces again, suspect stale CDN/browser cache or a not-yet-deployed commit
+  before re-auditing from scratch.
