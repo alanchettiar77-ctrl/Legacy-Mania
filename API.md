@@ -7,7 +7,7 @@ phases are tracked in `ROADMAP.md`, not documented here until they exist.
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/banners` | Active banners (scheduled/live only), ordered by `display_order` |
+| GET | `/api/banners` | Active banners (scheduled/live only), ordered by `display_order` (requires migration 010 to be applied — see TASKS.md) |
 | GET | `/api/faqs` | Active FAQs, ordered by `display_order` |
 | GET | `/api/products` | Product listing |
 | GET | `/api/categories` | Flat list of active categories |
