@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { applyProductSort } from "@/lib/services/product-service";
 import CatalogClient from "../catalog-client";
 import type { CategoryWithChildren } from "@/types";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -27,8 +29,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { sort } = await searchParams;
   const supabase = await createClient();
 
   const { data: category } = await supabase
@@ -52,13 +55,14 @@ export default async function CategoryPage({ params }: Props) {
       .is("parent_id", null)
       .eq("is_active", true)
       .order("display_order"),
-    supabase
-      .from("products")
-      .select("*, category:categories(*)", { count: "exact" })
-      .eq("is_active", true)
-      .in("category_id", allIds)
-      .order("created_at", { ascending: false })
-      .limit(100),
+    applyProductSort(
+      supabase
+        .from("products")
+        .select("*, category:categories(*)", { count: "exact" })
+        .eq("is_active", true)
+        .in("category_id", allIds),
+      sort ?? null
+    ).limit(100),
   ]);
 
   return (

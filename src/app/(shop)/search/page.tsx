@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { applyProductSort } from "@/lib/services/product-service";
 import ProductCard from "@/components/product/product-card";
 import Link from "next/link";
 
@@ -17,12 +18,14 @@ export default async function SearchPage({
   const supabase = await createClient();
 
   const { data: products } = q
-    ? await supabase
-        .from("products")
-        .select("*")
-        .eq("is_active", true)
-        .or(`name.ilike.%${q}%,description.ilike.%${q}%,tags.cs.{${q}}`)
-        .limit(24)
+    ? await applyProductSort(
+        supabase
+          .from("products")
+          .select("*")
+          .eq("is_active", true)
+          .or(`name.ilike.%${q}%,description.ilike.%${q}%,tags.cs.{${q}}`),
+        null
+      ).limit(24)
     : { data: [] };
 
   return (

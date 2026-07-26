@@ -10,7 +10,8 @@ export default async function AdminProductsPage() {
   const { data: productsRaw } = await db
     .from("products")
     .select("*, category:categories(name)")
-    .order("created_at", { ascending: false });
+    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: true });
 
   const products = (productsRaw ?? []) as Array<{
     id: string;

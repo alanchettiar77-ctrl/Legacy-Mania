@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getHomepageNotifications } from "@/lib/services/notification-service";
 import { getHomepageBanners } from "@/lib/services/banner-service";
 import { getHomepageCategories } from "@/lib/services/branding-service";
+import { applyProductSort } from "@/lib/services/product-service";
 
 export const metadata: Metadata = {
   title: "Legacy Mania — Collect The Stories That Shaped Generations",
@@ -28,12 +29,14 @@ export default async function HomePage() {
       getHomepageBanners(),
       // Admin-managed: honors show_on_homepage + display_order, cached with tag revalidation
       getHomepageCategories(),
-      supabase
-        .from("products")
-        .select("*")
-        .eq("is_featured", true)
-        .eq("is_active", true)
-        .limit(8),
+      applyProductSort(
+        supabase
+          .from("products")
+          .select("*")
+          .eq("is_featured", true)
+          .eq("is_active", true),
+        "featured"
+      ).limit(8),
       supabase
         .from("products")
         .select("*, category:categories(*)")

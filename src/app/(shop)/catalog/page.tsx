@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { applyProductSort } from "@/lib/services/product-service";
 import CatalogClient from "./catalog-client";
 import type { CategoryWithChildren } from "@/types";
 
@@ -30,12 +31,13 @@ export default async function CatalogPage({
       .is("parent_id", null)
       .eq("is_active", true)
       .order("display_order"),
-    supabase
-      .from("products")
-      .select("*, category:categories(*)", { count: "exact" })
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .range(from, to),
+    applyProductSort(
+      supabase
+        .from("products")
+        .select("*, category:categories(*)", { count: "exact" })
+        .eq("is_active", true),
+      params.sort ?? null
+    ).range(from, to),
   ]);
 
   return (
