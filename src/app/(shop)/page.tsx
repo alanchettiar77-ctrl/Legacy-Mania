@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import HeroSection from "@/components/home/hero-section";
 import AnnouncementBar from "@/components/home/announcement-bar";
+import BannerCarousel from "@/components/home/banner-carousel";
 import FeaturedCollections from "@/components/home/featured-collections";
 import LatestReleases from "@/components/home/latest-releases";
 import PopularCategories from "@/components/home/popular-categories";
@@ -9,6 +10,7 @@ import WhatsAppCTA from "@/components/home/whatsapp-cta";
 import Newsletter from "@/components/home/newsletter";
 import { createClient } from "@/lib/supabase/server";
 import { getHomepageNotifications } from "@/lib/services/notification-service";
+import { getHomepageBanners } from "@/lib/services/banner-service";
 import { getHomepageCategories } from "@/lib/services/branding-service";
 
 export const metadata: Metadata = {
@@ -20,9 +22,10 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const [notifications, categories, { data: featured }, { data: latest }] =
+  const [notifications, banners, categories, { data: featured }, { data: latest }] =
     await Promise.all([
       getHomepageNotifications("both"),
+      getHomepageBanners(),
       // Admin-managed: honors show_on_homepage + display_order, cached with tag revalidation
       getHomepageCategories(),
       supabase
@@ -43,6 +46,7 @@ export default async function HomePage() {
     <>
       <AnnouncementBar items={notifications.items} config={notifications.config} />
       <HeroSection />
+      <BannerCarousel banners={banners} />
       <FeaturedCollections products={featured ?? []} />
       <PopularCategories categories={categories} />
       <LatestReleases products={latest ?? []} />
