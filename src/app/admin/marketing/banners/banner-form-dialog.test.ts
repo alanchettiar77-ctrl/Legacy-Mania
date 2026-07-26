@@ -1,3 +1,5 @@
+process.env.TZ = "America/New_York";
+
 import { toLocalInput, toIsoOrNull } from "./banner-form-dialog";
 
 describe("banner-form-dialog date conversion", () => {
