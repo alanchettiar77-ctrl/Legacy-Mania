@@ -239,6 +239,7 @@ export type Database = {
           tags: string[];
           meta_title: string | null;
           meta_description: string | null;
+          display_order: number;
           created_at: string;
           updated_at: string;
         };
@@ -265,6 +266,7 @@ export type Database = {
           tags?: string[];
           meta_title?: string | null;
           meta_description?: string | null;
+          display_order?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -290,6 +292,7 @@ export type Database = {
           tags?: string[];
           meta_title?: string | null;
           meta_description?: string | null;
+          display_order?: number;
           updated_at?: string;
         };
         Relationships: [];
