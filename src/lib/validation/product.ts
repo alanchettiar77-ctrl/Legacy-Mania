@@ -13,6 +13,7 @@ export const productSchema = z.object({
   saga: z.string().nullable().default(null),
   collection: z.string().nullable().default(null),
   stock_quantity: z.coerce.number().min(0),
+  display_order: z.coerce.number().int().min(0).default(0),
   sku: z.string().nullable().default(null),
   is_active: z.boolean(),
   is_featured: z.boolean(),
