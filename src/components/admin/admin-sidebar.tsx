@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, Tag, ShoppingBag, Wallet,
-  Users, BarChart3, Settings, Zap, ChevronRight, Shield, HelpCircle, Megaphone, Palette
+  Users, BarChart3, Settings, Zap, ChevronRight, Shield, HelpCircle, Megaphone, Palette, Image
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +17,7 @@ const navItems = [
   { href: "/admin/faqs", label: "FAQs", icon: HelpCircle },
   { href: "/admin/marketing/notifications", label: "Marketing", icon: Megaphone },
   { href: "/admin/marketing/branding", label: "Branding", icon: Palette },
+  { href: "/admin/marketing/banners", label: "Homepage Banners", icon: Image },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/admins", label: "Admin Access", icon: Shield },
