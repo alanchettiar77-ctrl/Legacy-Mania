@@ -60,6 +60,7 @@ export default async function EditProductPage({ params }: Props) {
           saga: product.saga ?? "",
           collection: product.collection ?? "",
           stock_quantity: product.stock_quantity,
+          display_order: product.display_order,
           sku: product.sku ?? "",
           is_active: product.is_active,
           is_featured: product.is_featured,

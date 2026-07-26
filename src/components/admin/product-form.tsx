@@ -21,6 +21,7 @@ const productSchema = z.object({
   saga: z.string().optional(),
   collection: z.string().optional(),
   stock_quantity: z.coerce.number().min(0),
+  display_order: z.coerce.number().int().min(0).default(0),
   sku: z.string().optional(),
   is_active: z.boolean(),
   is_featured: z.boolean(),
@@ -40,9 +41,10 @@ interface Category {
 interface ProductFormProps {
   categories: Category[];
   initialData?: Partial<ProductFormData> & { id?: string; images?: string[] };
+  suggestedDisplayOrder?: number;
 }
 
-export default function ProductForm({ categories, initialData }: ProductFormProps) {
+export default function ProductForm({ categories, initialData, suggestedDisplayOrder }: ProductFormProps) {
   const router = useRouter();
   const [images, setImages] = useState<string[]>(initialData?.images ?? []);
   const [uploading, setUploading] = useState(false);
@@ -60,6 +62,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
       saga: initialData?.saga ?? "",
       collection: initialData?.collection ?? "",
       stock_quantity: initialData?.stock_quantity ?? 0,
+      display_order: initialData?.display_order ?? suggestedDisplayOrder ?? 0,
       sku: initialData?.sku ?? "",
       is_active: initialData?.is_active ?? true,
       is_featured: initialData?.is_featured ?? false,
@@ -107,6 +110,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
       saga: data.saga ?? null,
       collection: data.collection ?? null,
       stock_quantity: data.stock_quantity,
+      display_order: data.display_order,
       sku: data.sku ?? null,
       is_active: data.is_active,
       is_featured: data.is_featured,
@@ -130,6 +134,10 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
     if (!res.ok) {
       toast.error("Failed to save product");
       return;
+    }
+    const body = await res.json().catch(() => ({}));
+    if (body.warning) {
+      toast.warning(body.warning);
     }
     toast.success(initialData?.id ? "Product updated" : "Product created");
     router.push("/admin/products");
@@ -218,6 +226,21 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
                   min="0"
                   className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:outline-none text-sm"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Display Order</label>
+                <input
+                  {...form.register("display_order")}
+                  type="number"
+                  min="0"
+                  className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:outline-none text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Lower numbers appear first within this product's category (e.g. Pokédex order).
+                </p>
+                {form.formState.errors.display_order && (
+                  <p className="text-red-500 text-xs mt-1">{form.formState.errors.display_order.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">SKU</label>

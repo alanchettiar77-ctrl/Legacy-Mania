@@ -17,8 +17,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    await editProduct(id, parsed.data);
-    return NextResponse.json({ success: true });
+    const result = await editProduct(id, parsed.data);
+    return NextResponse.json({ success: true, warning: result.warning ?? null });
   } catch {
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   }

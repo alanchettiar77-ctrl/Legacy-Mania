@@ -34,8 +34,20 @@ describe("PATCH /api/admin/products/[id]", () => {
 
   it("200 and toggles is_active", async () => {
     mockRequireAdmin.mockResolvedValue({ ok: true, userId: "admin-1" });
+    mockEditProduct.mockResolvedValue({});
     const response = await PATCH(req({ is_active: false }), params);
     expect(response.status).toBe(200);
     expect(mockEditProduct).toHaveBeenCalledWith("p1", { is_active: false });
+    const body = await response.json();
+    expect(body).toEqual({ success: true, warning: null });
+  });
+
+  it("relays a warning from editProduct", async () => {
+    mockRequireAdmin.mockResolvedValue({ ok: true, userId: "admin-1" });
+    mockEditProduct.mockResolvedValue({ warning: "Display order 3 conflicts with another product" });
+    const response = await PATCH(req({ display_order: 3 }), params);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ success: true, warning: "Display order 3 conflicts with another product" });
   });
 });
