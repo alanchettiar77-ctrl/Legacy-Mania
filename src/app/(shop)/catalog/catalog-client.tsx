@@ -13,7 +13,7 @@ interface CatalogClientProps {
   currentPage?: number;
   pageSize?: number;
   categories: CategoryWithChildren[];
-  searchParams: { [key: string]: string | undefined };
+  searchParams?: { [key: string]: string | undefined };
   pageTitle?: string;
   pageDescription?: string;
 }

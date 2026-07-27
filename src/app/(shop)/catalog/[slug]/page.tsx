@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { applyProductSort } from "@/lib/services/product-service";
+import { getDescendantCategoryIds } from "@/lib/services/catalog-service";
 import CatalogClient from "../catalog-client";
 import type { CategoryWithChildren } from "@/types";
 
@@ -36,17 +37,14 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   const { data: category } = await supabase
     .from("categories")
-    .select("*, children:categories!parent_id(*)")
+    .select("*")
     .eq("slug", slug)
     .single();
 
   if (!category) notFound();
 
-  // Collect IDs: this category + all its children
-  const childIds: string[] = (category.children ?? []).map(
-    (c: { id: string }) => c.id
-  );
-  const allIds = [category.id, ...childIds];
+  // Aggregates this category + every descendant at any depth (not just direct children).
+  const allIds = await getDescendantCategoryIds(category.id);
 
   const [{ data: allCategories }, { data: products, count }] = await Promise.all([
     supabase
@@ -71,7 +69,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         initialProducts={products ?? []}
         totalCount={count ?? 0}
         categories={(allCategories ?? []) as CategoryWithChildren[]}
-        searchParams={{ category: category.id }}
         pageTitle={category.name}
         pageDescription={
           category.description ||
