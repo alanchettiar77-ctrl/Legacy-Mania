@@ -109,49 +109,62 @@ export default function HeroTilesTable({
       </div>
 
       <div className="space-y-2">
-        {rows.map((tile, i) => (
-          <div
-            key={tile.id}
-            draggable
-            onDragStart={() => setDragIndex(i)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => onDrop(i)}
-            className="flex items-center gap-4 bg-card border border-border rounded-xl p-4"
-          >
-            <span className="text-2xl" aria-hidden="true">
-              {tile.icon_emoji}
-            </span>
-            <div className="flex-1">
-              <p className="font-semibold text-foreground">{tile.label}</p>
-              <p className="text-xs text-muted-foreground">
-                {tile.link_type} → {tile.link_value}
-              </p>
-            </div>
-            <button
-              onClick={() => toggleActive(tile)}
-              disabled={pendingId === tile.id}
-              className="p-2 text-muted-foreground hover:text-foreground"
-              aria-label={tile.is_active ? "Hide tile" : "Show tile"}
-            >
-              {tile.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={() => openEdit(tile)}
-              className="p-2 text-muted-foreground hover:text-foreground"
-              aria-label="Edit tile"
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => remove(tile)}
-              disabled={pendingId === tile.id}
-              className="p-2 text-muted-foreground hover:text-destructive"
-              aria-label="Delete tile"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
+        {(() => {
+          let activeSeen = 0;
+          return rows.map((tile, i) => {
+            if (tile.is_active) activeSeen += 1;
+            // Only active rows count toward the 4-tile homepage limit — an inactive
+            // row past the 4th shouldn't be double-dimmed for two different reasons.
+            const truncated = tile.is_active && activeSeen > 4;
+            const dimmed = !tile.is_active || truncated;
+            return (
+              <div
+                key={tile.id}
+                draggable
+                onDragStart={() => setDragIndex(i)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => onDrop(i)}
+                className={`flex items-center gap-4 bg-card border border-border rounded-xl p-4 ${dimmed ? "opacity-50" : ""}`}
+              >
+                <span className="cursor-grab text-muted-foreground" aria-hidden="true">
+                  ⠿
+                </span>
+                <span className="text-2xl" aria-hidden="true">
+                  {tile.icon_emoji}
+                </span>
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground">{tile.label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {tile.link_type} → {tile.link_value}
+                  </p>
+                </div>
+                <button
+                  onClick={() => toggleActive(tile)}
+                  disabled={pendingId === tile.id}
+                  className="p-2 text-muted-foreground hover:text-foreground"
+                  aria-label={tile.is_active ? "Hide tile" : "Show tile"}
+                >
+                  {tile.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={() => openEdit(tile)}
+                  className="p-2 text-muted-foreground hover:text-foreground"
+                  aria-label="Edit tile"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => remove(tile)}
+                  disabled={pendingId === tile.id}
+                  className="p-2 text-muted-foreground hover:text-destructive"
+                  aria-label="Delete tile"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            );
+          });
+        })()}
         {rows.length === 0 && (
           <p className="text-sm text-muted-foreground py-8 text-center">
             No hero tiles yet. The homepage falls back to its default tiles until you add one.

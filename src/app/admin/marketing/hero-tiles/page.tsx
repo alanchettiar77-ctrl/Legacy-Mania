@@ -22,8 +22,9 @@ export default async function HeroTilesPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Homepage Hero Tiles</h1>
         <p className="text-sm text-muted-foreground">
-          The floating tiles shown in the homepage hero section. Reorder by dragging, link them
-          anywhere, hide or delete as needed.
+          The floating tiles shown in the homepage hero section. Only the first 4 active tiles
+          (by display order) are shown on the site — reorder by dragging, link them anywhere,
+          hide or delete as needed.
         </p>
       </div>
       <HeroTilesTable initialTiles={tiles} categories={categories} />
