@@ -101,7 +101,7 @@ export default function HeroTileFormDialog({
               value={form.label}
               onChange={(e) => setForm({ ...form, label: e.target.value })}
               className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              placeholder="e.g., Pikachu"
+              placeholder="e.g., Featured Item"
             />
           </div>
 

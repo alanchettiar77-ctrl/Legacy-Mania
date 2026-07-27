@@ -79,6 +79,7 @@ export default function HeroTilesTable({
       setDragIndex(null);
       return;
     }
+    const previousRows = rows; // snapshot before mutating, not the initialTiles prop
     const reordered = [...rows];
     const [moved] = reordered.splice(dragIndex, 1);
     reordered.splice(targetIndex, 0, moved);
@@ -91,7 +92,7 @@ export default function HeroTilesTable({
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to reorder tiles");
-      setRows(initialTiles);
+      setRows(previousRows);
     }
   };
 
