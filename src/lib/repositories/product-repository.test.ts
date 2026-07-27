@@ -120,3 +120,52 @@ describe("product-repository display_order helpers", () => {
     expect(secondCallBody).toEqual({ display_order: 1 });
   });
 });
+
+describe("countActiveProductsByCategory", () => {
+  it("requests a count-only response and returns the total", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      headers: { get: (name: string) => (name.toLowerCase() === "content-range" ? "0-0/7" : null) },
+      json: async () => [],
+    });
+    const { countActiveProductsByCategory } = await import("@/lib/repositories/product-repository");
+
+    await expect(countActiveProductsByCategory("cat-1")).resolves.toBe(7);
+    const url = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+    expect(url).toContain("category_id=eq.cat-1");
+  });
+
+  it("returns 0 when the category has no products", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      headers: { get: () => "0-(-1)/0" },
+      json: async () => [],
+    });
+    const { countActiveProductsByCategory } = await import("@/lib/repositories/product-repository");
+
+    await expect(countActiveProductsByCategory("cat-empty")).resolves.toBe(0);
+  });
+});
+
+describe("reassignProductsCategory", () => {
+  it("PATCHes every product in fromCategoryId to toCategoryId", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => [{ id: "p1" }, { id: "p2" }],
+    });
+    const { reassignProductsCategory } = await import("@/lib/repositories/product-repository");
+
+    await expect(reassignProductsCategory("cat-old", "cat-new")).resolves.toBe(2);
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(url).toContain("category_id=eq.cat-old");
+    expect(init.method).toBe("PATCH");
+    expect(JSON.parse(init.body as string)).toEqual({ category_id: "cat-new" });
+  });
+
+  it("throws if the PATCH fails", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500 });
+    const { reassignProductsCategory } = await import("@/lib/repositories/product-repository");
+
+    await expect(reassignProductsCategory("cat-old", "cat-new")).rejects.toThrow();
+  });
+});
