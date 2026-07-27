@@ -291,4 +291,77 @@ this specific bypass path can never silently regress:
 
 ---
 
-*Updated: 2026-07-26*
+## [2026-07-27] — v0.12.0 — Generic Category CMS ✅
+
+### Type
+Feature Addition — Full Admin CRUD, Soft Delete, Reassignment, SEO Fields for `categories`
+
+### Status
+✅ Full test suite and `tsc --noEmit` pass. Migration `012` (`deleted_at` on `categories`) is
+handed to the human partner to apply manually via the Supabase SQL Editor per this repo's
+convention — no CLI available in this environment.
+
+### Features Added
+- `supabase/migrations/012_category_soft_delete.sql` — adds `deleted_at TIMESTAMPTZ` to
+  `categories`, matching the existing `banners`/`homepage_notifications` soft-delete convention
+  (`deleted_at IS NULL` = visible everywhere)
+- `DELETE /api/admin/categories/:id` — soft-deletes a category; body
+  `{ reassignChildrenTo?, reassignProductsTo? }` lets the admin reassign children/products in
+  the same request; `409` if either is left unresolved
+- `POST /api/admin/categories/:id/reassign-products` — standalone product reassignment, body
+  `{ toCategoryId }`
+- Cycle prevention on `PATCH /api/admin/categories/:id` — re-parenting a category under itself
+  or one of its own descendants is rejected with `409`, reusing Phase 1's
+  `CatalogService.getDescendantCategoryIds()` (no second tree-walk implementation)
+- Slug-uniqueness validation on create/edit
+- SEO fields (`meta_title`/`meta_description`) added to the category content schema
+- `/admin/categories/new` and `/admin/categories/:id/edit` — the edit page was a dead link
+  before this work (referenced by the admin tree, page never built); both now exist
+- Recursive drag-and-drop admin category tree (replaces the old flat two-level list), reusing
+  the native HTML5 drag pattern already used by the admin products table (no dnd library)
+- `POST`/`PATCH /api/admin/categories*` now follow the standard admin route pattern (rate limit
+  → `requireAdmin()` → zod validate → one service call → `recordAuditLog()`), matching every
+  other admin route
+
+### Features Modified
+- `categoryBrandingSchema` — `is_active` removed (moved to the content-edit schema); Activate/
+  Deactivate is now exclusively a content-endpoint concern, closing a two-competing-sources-of-
+  truth gap
+- `category-repository.ts` — `listActiveCategories()`/`listAllCategories()`/
+  `listHomepageCategories()` now exclude soft-deleted rows
+
+### Bugs Fixed (found during implementation, fixed before merge)
+- Deleting a category with inactive (not just active) products previously left those products
+  silently orphaned (`category_id` pointing at a soft-deleted row) — delete's product-check now
+  also counts inactive products, not just active ones
+- Reassigning a branch's children to a new parent previously could partially commit (some
+  children moved) before a later validation failure aborted the rest, leaving the tree in a
+  half-moved state — reassignment now validates every target up front before writing anything
+
+### Tests Added
+- `src/lib/repositories/category-repository.test.ts` — new; no repository tests existed for
+  categories before this work
+- Service-layer tests for cycle prevention, slug conflicts, delete blocking/reassignment
+- `route.test.ts` for every new/changed admin category route (401/403 + behavior)
+- A full non-card regression test (`T-Shirts → Men → Hoodies` hierarchy) proving the CMS is
+  generic — identical behavior to a card-franchise category tree, zero category-specific code
+  anywhere in the implementation
+
+### Documentation
+- `API.md`, `DATABASE.md`, `ROADMAP.md`, `PROJECT_CONTEXT.md`, `AI_MEMORY.md`, `CHANGELOG.md`,
+  `TASKS.md` all updated to reflect the CMS; `ROADMAP.md` gained a
+  `## Future Enhancements (documented, not built)` section (generic internal linking for future
+  CMS modules, category slug history + redirects, richer media fields, per-row audit metadata)
+  capturing four forward-looking decisions raised during plan review but deliberately not built
+  in this phase
+
+### Next Steps
+- Human partner to apply migration `012` via the Supabase SQL Editor, then verify live
+  (`deleted_at` column present, soft-delete/reassignment flows work against production data)
+- Remainder of the original Phase 3 scope is still open: `/api/products/:slug`, a products
+  search endpoint, rarity/condition fields in the admin product form, and a navbar catalog tree
+  (see `ROADMAP.md`'s "3b — Product/Catalog hardening" row)
+
+---
+
+*Updated: 2026-07-27*

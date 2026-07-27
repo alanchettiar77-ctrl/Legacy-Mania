@@ -61,3 +61,13 @@ rules) → `src/app/api/**/route.ts` (thin — auth, validate, call one service 
   product row directly. Any new code that filters products by category (`.eq("category_id", x)`)
   is almost certainly wrong for a parent category — expand via `getDescendantCategoryIds()` first
   and use `.in()`. Fixed 2026-07-27; see CHANGELOG.
+- **Category cycle prevention lives in `CategoryService.editCategory()`, reusing Phase 1's
+  `getDescendantCategoryIds()`** — never add a second parent_id validation path.
+- **Category delete is soft (`deleted_at`) and blocks on unresolved children/products** — never
+  call `softDeleteCategory()` directly from a route; always go through
+  `CategoryService.deleteCategory()`.
+- **Future CMS modules that link somewhere (homepage tiles, nav items, promo sections) must not
+  assume the target is always a category.** Model the link as `link_type`
+  (`category`|`product`|`collection`|`search`|`page`|`custom_url`) + `link_value`, not a bare
+  `category_id` column — see `ROADMAP.md`'s Future Enhancements section for the full rationale.
+  This is guidance for Phase 4/5, not something the current Category CMS implements.
