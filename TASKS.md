@@ -202,3 +202,4 @@ Pending and future work. AI Developer: check this before every session.
 - [x] CHANGELOG.md
 - [x] TASKS.md
 - [x] update.md
+- [ ] Testimonials CMS (ROADMAP.md Phase 4b) — replace the 4 hardcoded fake reviews in `src/components/home/testimonials.tsx` with an admin-manageable module. Requested 2026-07-27, not yet started.
