@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Filter, Grid3X3, List, Search, X, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Product, CategoryWithChildren } from "@/types";
 import ProductCard from "@/components/product/product-card";
@@ -13,7 +14,6 @@ interface CatalogClientProps {
   currentPage?: number;
   pageSize?: number;
   categories: CategoryWithChildren[];
-  searchParams?: { [key: string]: string | undefined };
   pageTitle?: string;
   pageDescription?: string;
 }
@@ -44,13 +44,11 @@ export default function CatalogClient({
   const products = initialProducts;
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState(searchParamsObj.get("sort") ?? "display_order");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const filtered = products.filter((p) => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
-    if (selectedCategory && p.category_id !== selectedCategory) return false;
     return true;
   });
 
@@ -94,46 +92,46 @@ export default function CatalogClient({
                 </h3>
                 <ul className="space-y-1">
                   <li>
-                    <button
-                      onClick={() => setSelectedCategory(null)}
+                    <Link
+                      href="/catalog"
                       className={cn(
-                        "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                        selectedCategory === null
+                        "w-full block text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                        pathname === "/catalog"
                           ? "bg-primary text-primary-foreground font-semibold"
                           : "text-muted-foreground hover:text-foreground hover:bg-accent"
                       )}
                     >
                       All Series
-                    </button>
+                    </Link>
                   </li>
                   {categories.map((cat) => (
                     <li key={cat.id}>
-                      <button
-                        onClick={() => setSelectedCategory(cat.id)}
+                      <Link
+                        href={`/catalog/${cat.slug}`}
                         className={cn(
-                          "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                          selectedCategory === cat.id
+                          "w-full block text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                          pathname === `/catalog/${cat.slug}`
                             ? "bg-primary text-primary-foreground font-semibold"
                             : "text-muted-foreground hover:text-foreground hover:bg-accent"
                         )}
                       >
                         {cat.name}
-                      </button>
+                      </Link>
                       {cat.children && cat.children.length > 0 && (
                         <ul className="ml-4 mt-1 space-y-1">
                           {cat.children.map((child) => (
                             <li key={child.id}>
-                              <button
-                                onClick={() => setSelectedCategory(child.id)}
+                              <Link
+                                href={`/catalog/${child.slug}`}
                                 className={cn(
-                                  "w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors",
-                                  selectedCategory === child.id
+                                  "w-full block text-left px-3 py-1.5 rounded-lg text-xs transition-colors",
+                                  pathname === `/catalog/${child.slug}`
                                     ? "text-primary font-semibold"
                                     : "text-muted-foreground hover:text-foreground"
                                 )}
                               >
                                 {child.name}
-                              </button>
+                              </Link>
                             </li>
                           ))}
                         </ul>
@@ -223,7 +221,7 @@ export default function CatalogClient({
 
             {/* Result count */}
             <p className="text-sm text-muted-foreground mb-4">
-              {search || selectedCategory
+              {search
                 ? `${filtered.length} result${filtered.length !== 1 ? "s" : ""} found`
                 : `Showing ${initialProducts.length} of ${totalCount} products`}
             </p>
@@ -249,7 +247,7 @@ export default function CatalogClient({
             )}
 
             {/* Pagination — only shown when not filtering locally */}
-            {!search && !selectedCategory && totalCount > pageSize && (
+            {!search && totalCount > pageSize && (
               <div className="flex items-center justify-center gap-2 mt-10">
                 <button
                   disabled={currentPage <= 1}

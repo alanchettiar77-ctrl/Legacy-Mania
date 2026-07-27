@@ -48,7 +48,6 @@ export default async function CatalogPage({
         currentPage={page}
         pageSize={PAGE_SIZE}
         categories={(categories ?? []) as CategoryWithChildren[]}
-        searchParams={params}
       />
     </Suspense>
   );

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import CatalogClient from "./catalog-client";
-import type { Product } from "@/types";
+import type { Product, CategoryWithChildren } from "@/types";
 
 const mockPush = jest.fn();
 jest.mock("next/navigation", () => ({
@@ -45,6 +45,25 @@ function makeProduct(overrides: Partial<Product> = {}): Product {
   } as Product;
 }
 
+function makeCategory(overrides: Partial<CategoryWithChildren> = {}): CategoryWithChildren {
+  return {
+    id: "pokemon",
+    name: "Pokémon",
+    slug: "pokemon",
+    description: null,
+    image_url: null,
+    parent_id: null,
+    display_order: 0,
+    is_active: true,
+    meta_title: null,
+    meta_description: null,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    children: [],
+    ...overrides,
+  } as CategoryWithChildren;
+}
+
 const page1Products = [makeProduct({ id: "p1", name: "Bulbasaur" })];
 const page2Products = [makeProduct({ id: "p25", name: "Charmander" })];
 
@@ -59,15 +78,11 @@ describe("CatalogClient pagination", () => {
         currentPage={1}
         pageSize={24}
         categories={[]}
-        searchParams={{}}
       />
     );
     expect(screen.getByText("Bulbasaur")).toBeInTheDocument();
     expect(screen.queryByText("Charmander")).not.toBeInTheDocument();
 
-    // Simulates the server re-rendering CatalogPage with page=2 data after
-    // a client-side navigation. The component instance is NOT remounted,
-    // so this must be a prop update, not a fresh mount.
     rerender(
       <CatalogClient
         initialProducts={page2Products}
@@ -75,11 +90,47 @@ describe("CatalogClient pagination", () => {
         currentPage={2}
         pageSize={24}
         categories={[]}
-        searchParams={{ page: "2" }}
       />
     );
 
     expect(screen.getByText("Charmander")).toBeInTheDocument();
     expect(screen.queryByText("Bulbasaur")).not.toBeInTheDocument();
+  });
+});
+
+describe("CatalogClient category sidebar", () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it("links a parent category to its /catalog/[slug] page instead of filtering client-side", () => {
+    render(
+      <CatalogClient
+        initialProducts={page1Products}
+        totalCount={1}
+        categories={[makeCategory({ id: "pokemon", slug: "pokemon", name: "Pokémon" })]}
+      />
+    );
+    const link = screen.getByRole("link", { name: "Pokémon" });
+    expect(link).toHaveAttribute("href", "/catalog/pokemon");
+  });
+
+  it("links a child category to its own /catalog/[slug] page", () => {
+    render(
+      <CatalogClient
+        initialProducts={page1Products}
+        totalCount={1}
+        categories={[
+          makeCategory({
+            id: "pokemon",
+            slug: "pokemon",
+            name: "Pokémon",
+            children: [
+              makeCategory({ id: "indigo", slug: "pokemon-indigo-league", name: "Indigo League", parent_id: "pokemon" }),
+            ],
+          }),
+        ]}
+      />
+    );
+    const link = screen.getByRole("link", { name: "Indigo League" });
+    expect(link).toHaveAttribute("href", "/catalog/pokemon-indigo-league");
   });
 });
