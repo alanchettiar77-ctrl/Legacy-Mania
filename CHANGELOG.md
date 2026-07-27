@@ -4,6 +4,21 @@ All notable changes are recorded here.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- Parent category pages (e.g. `/catalog/pokemon`) and the `/api/products?category=` filter now
+  aggregate products from every descendant category at any depth, not just an exact `category_id`
+  match. Root cause: products are always tagged with a leaf category, so a parent category's own
+  id never appears on any product row — the old exact-match filter (both server-side `.eq()` and
+  the catalog sidebar's client-side `selectedCategory` check) always returned zero results for any
+  category with children. Fixed via `CatalogService.getDescendantCategoryIds()`, a BFS over the
+  category tree, used by `/api/products`, `/catalog/[slug]`, and (by replacing client-side
+  filtering with navigation) the catalog sidebar.
+
+---
+
 ## [0.1.0] — 2026-06-22 — Initial Build
 
 ### Added — Core Platform

@@ -30,7 +30,7 @@ Pending and future work. AI Developer: check this before every session.
 - [ ] **Upload UPI QR** — via Admin → Settings → UPI Payment (verify still set after recent settings work)
 - [x] **Set WhatsApp number** — `NEXT_PUBLIC_WHATSAPP_NUMBER` set in `.env.local`
 - [ ] **Add product catalog** — Verify real products are uploaded via Admin → Products → Add Product
-- [ ] **Set up categories** — Verify seeded categories are correct
+- [x] **Set up categories** — Verify seeded categories are correct
 - [ ] **Deploy to Vercel** — Confirm production deploy is live and env vars match `.env.local`
 - [ ] **Reconcile migration** — `supabase/migrations/001_initial_schema.sql` has uncommitted local changes; confirm they match the live Supabase schema, then commit
 

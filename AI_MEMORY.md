@@ -56,3 +56,8 @@ rules) → `src/app/api/**/route.ts` (thin — auth, validate, call one service 
   (`src/lib/supabase/middleware.test.ts` + a `route.test.ts` per admin route). If a future report
   of this bypass surfaces again, suspect stale CDN/browser cache or a not-yet-deployed commit
   before re-auditing from scratch.
+- **Category filtering must always go through `CatalogService.getDescendantCategoryIds()`** —
+  products are tagged with leaf categories only; a parent category's own id never matches any
+  product row directly. Any new code that filters products by category (`.eq("category_id", x)`)
+  is almost certainly wrong for a parent category — expand via `getDescendantCategoryIds()` first
+  and use `.in()`. Fixed 2026-07-27; see CHANGELOG.
