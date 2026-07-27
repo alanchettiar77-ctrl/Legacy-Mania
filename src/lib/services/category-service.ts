@@ -8,7 +8,7 @@ import {
   type CategoryWritePayload,
 } from "@/lib/repositories/category-repository";
 import {
-  countActiveProductsByCategory,
+  countProductsByCategory,
   reassignProductsCategory,
 } from "@/lib/repositories/product-repository";
 import { getDescendantCategoryIds } from "@/lib/services/catalog-service";
@@ -80,18 +80,21 @@ export async function deleteCategory(id: string, options: DeleteCategoryOptions 
 
   const allCategories = await listAllCategories();
   const directChildren = allCategories.filter((cat) => cat.parent_id === id);
-
-  if (directChildren.length > 0) {
-    if (!options.reassignChildrenTo) throw new CategoryHasChildrenError();
-    for (const child of directChildren) {
-      await updateCategoryBranding(child.id, { parent_id: options.reassignChildrenTo });
-    }
+  if (directChildren.length > 0 && !options.reassignChildrenTo) {
+    throw new CategoryHasChildrenError();
   }
 
-  const productCount = await countActiveProductsByCategory(id);
+  const productCount = await countProductsByCategory(id);
+  if (productCount > 0 && !options.reassignProductsTo) {
+    throw new CategoryHasProductsError();
+  }
+
+  for (const child of directChildren) {
+    await updateCategoryBranding(child.id, { parent_id: options.reassignChildrenTo });
+  }
+
   if (productCount > 0) {
-    if (!options.reassignProductsTo) throw new CategoryHasProductsError();
-    await reassignProductsCategory(id, options.reassignProductsTo);
+    await reassignProductsCategory(id, options.reassignProductsTo!);
   }
 
   await softDeleteCategory(id);

@@ -147,6 +147,32 @@ describe("countActiveProductsByCategory", () => {
   });
 });
 
+describe("countProductsByCategory", () => {
+  it("requests a count-only response and returns the total", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      headers: { get: (name: string) => (name.toLowerCase() === "content-range" ? "0-0/7" : null) },
+      json: async () => [],
+    });
+    const { countProductsByCategory } = await import("@/lib/repositories/product-repository");
+
+    await expect(countProductsByCategory("cat-1")).resolves.toBe(7);
+    const url = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+    expect(url).toContain("category_id=eq.cat-1");
+  });
+
+  it("returns 0 when the category has no products", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      headers: { get: () => "0-(-1)/0" },
+      json: async () => [],
+    });
+    const { countProductsByCategory } = await import("@/lib/repositories/product-repository");
+
+    await expect(countProductsByCategory("cat-empty")).resolves.toBe(0);
+  });
+});
+
 describe("reassignProductsCategory", () => {
   it("PATCHes every product in fromCategoryId to toCategoryId", async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({

@@ -7,7 +7,7 @@ jest.mock("@/lib/repositories/category-repository", () => ({
   softDeleteCategory: jest.fn(),
 }));
 jest.mock("@/lib/repositories/product-repository", () => ({
-  countActiveProductsByCategory: jest.fn(),
+  countProductsByCategory: jest.fn(),
   reassignProductsCategory: jest.fn(),
 }));
 jest.mock("@/lib/services/catalog-service", () => ({
@@ -33,7 +33,7 @@ import {
   softDeleteCategory,
 } from "@/lib/repositories/category-repository";
 import {
-  countActiveProductsByCategory,
+  countProductsByCategory,
   reassignProductsCategory,
 } from "@/lib/repositories/product-repository";
 import { getDescendantCategoryIds } from "@/lib/services/catalog-service";
@@ -112,7 +112,7 @@ describe("deleteCategory", () => {
   it("soft-deletes a category with no children and no products", async () => {
     (getCategoryById as jest.Mock).mockResolvedValue({ id: "leaf", slug: "leaf" });
     (listAllCategories as jest.Mock).mockResolvedValue([{ id: "leaf", parent_id: null }]);
-    (countActiveProductsByCategory as jest.Mock).mockResolvedValue(0);
+    (countProductsByCategory as jest.Mock).mockResolvedValue(0);
     (softDeleteCategory as jest.Mock).mockResolvedValue(undefined);
 
     await deleteCategory("leaf");
@@ -126,7 +126,7 @@ describe("deleteCategory", () => {
       { id: "parent", parent_id: null },
       { id: "child", parent_id: "parent" },
     ]);
-    (countActiveProductsByCategory as jest.Mock).mockResolvedValue(0);
+    (countProductsByCategory as jest.Mock).mockResolvedValue(0);
 
     await expect(deleteCategory("parent")).rejects.toThrow(CategoryHasChildrenError);
     expect(softDeleteCategory).not.toHaveBeenCalled();
@@ -135,9 +135,36 @@ describe("deleteCategory", () => {
   it("throws CategoryHasProductsError when products exist and no reassignProductsTo is given", async () => {
     (getCategoryById as jest.Mock).mockResolvedValue({ id: "leaf", slug: "leaf" });
     (listAllCategories as jest.Mock).mockResolvedValue([{ id: "leaf", parent_id: null }]);
-    (countActiveProductsByCategory as jest.Mock).mockResolvedValue(3);
+    (countProductsByCategory as jest.Mock).mockResolvedValue(3);
 
     await expect(deleteCategory("leaf")).rejects.toThrow(CategoryHasProductsError);
+    expect(softDeleteCategory).not.toHaveBeenCalled();
+  });
+
+  it("throws CategoryHasProductsError when the category has only inactive products and no reassignProductsTo is given", async () => {
+    (getCategoryById as jest.Mock).mockResolvedValue({ id: "leaf", slug: "leaf" });
+    (listAllCategories as jest.Mock).mockResolvedValue([{ id: "leaf", parent_id: null }]);
+    // countProductsByCategory counts all products regardless of active status, unlike
+    // countActiveProductsByCategory — so this catches a category with zero active but
+    // some inactive products still referencing it.
+    (countProductsByCategory as jest.Mock).mockResolvedValue(1);
+
+    await expect(deleteCategory("leaf")).rejects.toThrow(CategoryHasProductsError);
+    expect(softDeleteCategory).not.toHaveBeenCalled();
+  });
+
+  it("throws CategoryHasProductsError without reassigning children first, when children exist but reassignProductsTo is missing", async () => {
+    (getCategoryById as jest.Mock).mockResolvedValue({ id: "parent", slug: "parent" });
+    (listAllCategories as jest.Mock).mockResolvedValue([
+      { id: "parent", parent_id: null },
+      { id: "child", parent_id: "parent" },
+    ]);
+    (countProductsByCategory as jest.Mock).mockResolvedValue(3);
+
+    await expect(
+      deleteCategory("parent", { reassignChildrenTo: "other" })
+    ).rejects.toThrow(CategoryHasProductsError);
+    expect(updateCategoryBranding).not.toHaveBeenCalled();
     expect(softDeleteCategory).not.toHaveBeenCalled();
   });
 
@@ -147,7 +174,7 @@ describe("deleteCategory", () => {
       { id: "parent", parent_id: null },
       { id: "child", parent_id: "parent" },
     ]);
-    (countActiveProductsByCategory as jest.Mock).mockResolvedValue(0);
+    (countProductsByCategory as jest.Mock).mockResolvedValue(0);
     (updateCategoryBranding as jest.Mock).mockResolvedValue({ id: "child", parent_id: "other" });
 
     await deleteCategory("parent", { reassignChildrenTo: "other" });
@@ -159,7 +186,7 @@ describe("deleteCategory", () => {
   it("reassigns products then deletes when reassignProductsTo is given", async () => {
     (getCategoryById as jest.Mock).mockResolvedValue({ id: "leaf", slug: "leaf" });
     (listAllCategories as jest.Mock).mockResolvedValue([{ id: "leaf", parent_id: null }]);
-    (countActiveProductsByCategory as jest.Mock).mockResolvedValue(3);
+    (countProductsByCategory as jest.Mock).mockResolvedValue(3);
     (reassignProductsCategory as jest.Mock).mockResolvedValue(3);
 
     await deleteCategory("leaf", { reassignProductsTo: "other-leaf" });

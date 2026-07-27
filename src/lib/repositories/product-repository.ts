@@ -116,6 +116,18 @@ export async function countActiveProductsByCategory(categoryId: string): Promise
   return Number.isFinite(total) ? Math.max(total, 0) : 0;
 }
 
+/** Count of all products (active or not) directly in a category (does not expand descendants — that's a service-layer concern). */
+export async function countProductsByCategory(categoryId: string): Promise<number> {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/products?category_id=eq.${encodeURIComponent(categoryId)}&select=id`,
+    { headers: { ...HEADERS, Prefer: "count=exact" }, cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`Failed to count products for category ${categoryId}: ${res.status}`);
+  const range = res.headers.get("content-range") ?? "0-0/0";
+  const total = Number(range.split("/")[1]);
+  return Number.isFinite(total) ? Math.max(total, 0) : 0;
+}
+
 /** Rewrites category_id for every product currently in fromCategoryId. Returns rows affected. */
 export async function reassignProductsCategory(fromCategoryId: string, toCategoryId: string): Promise<number> {
   const res = await fetch(
