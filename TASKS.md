@@ -70,6 +70,13 @@ Pending and future work. AI Developer: check this before every session.
       `meta_description`, recursive drag-and-drop admin tree, `/admin/categories/:id/edit` (was
       a dead link) now built. Works identically for any collection type — verified via a
       T-Shirts/Men/Hoodies regression test, zero category-specific code.
+- [x] **Homepage Hero Tiles CMS (2026-07-27)** — Full admin CRUD/reorder/hide/soft-delete for
+      the homepage's floating hero tiles (`hero_tiles` table, migration `013`), replacing the
+      previously-hardcoded, non-clickable Pikachu/Goku/Naruto/Luffy tiles. First table to use the
+      generic `link_type`/`link_value` linking model instead of a bare `category_id` FK.
+      `/admin/marketing/hero-tiles` admin page; public hero section falls back to its 4 default
+      tiles if the migration isn't applied. Implemented per
+      `docs/superpowers/plans/2026-07-27-homepage-hero-tiles-cms.md` (all 9 tasks complete).
 - [x] **Soft-delete products** — Admin products table now has toggle visibility + remove (sets `is_active = false`)
 - [x] **JSON-LD structured data** — Product pages now emit `Product` schema with price, availability, seller
 - [x] **FAQ page** — `/faq`, now database-driven (`faqs` table) instead of hardcoded, 12 seeded Q&As, Radix accordion

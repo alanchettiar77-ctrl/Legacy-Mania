@@ -23,8 +23,21 @@ All notable changes are recorded here.
   and verified via a non-card `T-Shirts → Men → Hoodies` hierarchy test (Task 9) proving it works
   identically for any collection type, not just trading cards.
 
+- **Homepage Hero Tiles CMS.** Homepage hero tiles are now admin-managed
+  (`/admin/marketing/hero-tiles`) — add, edit, reorder, hide, or delete the floating hero tiles
+  without a deploy. New `hero_tiles` table (migration `013`), the first table to use the generic
+  `link_type`/`link_value` linking model (`category`|`product`|`collection`|`search`|`page`|
+  `custom_url`) instead of a bare `category_id` FK. `GET`/`POST /api/admin/hero-tiles`,
+  `PATCH`/`DELETE /api/admin/hero-tiles/:id`, `POST /api/admin/hero-tiles/reorder` follow the
+  standard rate-limit → `requireAdmin()` → validate → service → `recordAuditLog()` pattern. The
+  public homepage hero section reads live tiles via `getHomepageHeroTiles()`, falling back to its
+  4 built-in default tiles if the table/migration isn't reachable — the homepage never breaks.
+
 ### Fixed
 
+- The 4 homepage hero tiles were previously hardcoded in `hero-section.tsx` and not clickable —
+  now database-driven and each links via `resolveHeroTileHref` to its configured category,
+  product, collection, search, page, or custom URL.
 - Parent category pages (e.g. `/catalog/pokemon`) and the `/api/products?category=` filter now
   aggregate products from every descendant category at any depth, not just an exact `category_id`
   match. Root cause: products are always tagged with a leaf category, so a parent category's own
