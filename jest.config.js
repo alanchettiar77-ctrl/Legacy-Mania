@@ -14,8 +14,8 @@ const customJestConfig = {
     "[\\\\/]node_modules[\\\\/]",
     "[\\\\/]e2e[\\\\/]",
     "[\\\\/]\\.claude[\\\\/]",
-    "[\\\\/]\\.worktrees[\\\\/]",
-    "[\\\\/]worktrees[\\\\/]",
+    "<rootDir>[\\\\/]\\.worktrees[\\\\/]",
+    "<rootDir>[\\\\/]worktrees[\\\\/]",
   ],
 };
 
