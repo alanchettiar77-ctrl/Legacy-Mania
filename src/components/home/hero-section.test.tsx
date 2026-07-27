@@ -23,12 +23,12 @@ describe("HeroSection", () => {
     expect(link).toHaveAttribute("href", "/catalog/pokemon");
   });
 
-  it("falls back to the 4 default tiles, each linking to a real category, when given an empty array", () => {
+  it("renders zero tile links when given an empty array (trusts the server-decided prop, doesn't second-guess it)", () => {
     render(<HeroSection tiles={[]} />);
-    expect(screen.getByRole("link", { name: /pikachu/i })).toHaveAttribute("href", "/catalog/pokemon");
-    expect(screen.getByRole("link", { name: /goku/i })).toHaveAttribute("href", "/catalog/dragon-ball-z");
-    expect(screen.getByRole("link", { name: /naruto/i })).toHaveAttribute("href", "/catalog/naruto");
-    expect(screen.getByRole("link", { name: /luffy/i })).toHaveAttribute("href", "/catalog/one-piece");
+    const tileLinks = screen
+      .queryAllByRole("link")
+      .filter((link) => link.getAttribute("href")?.startsWith("/catalog/"));
+    expect(tileLinks).toHaveLength(0);
   });
 
   it("skips inactive tiles", () => {

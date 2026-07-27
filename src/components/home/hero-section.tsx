@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles, Shield, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { resolveHeroTileHref, type HeroTileLinkFields } from "@/lib/utils/hero-tile-link";
+import { resolveHeroTileHref } from "@/lib/utils/hero-tile-link";
+import type { HeroTileDisplay } from "@/lib/utils/hero-tile-defaults";
 
 const features = [
   { icon: Shield, label: "100% Authentic" },
@@ -23,30 +24,8 @@ const COLOR_THEME_CLASSES: Record<string, string> = {
   violet: "from-purple-400 to-indigo-500",
 };
 
-export interface HeroTileDisplay extends HeroTileLinkFields {
-  id: string;
-  label: string;
-  icon_emoji: string;
-  color_theme: string;
-  display_order: number;
-  is_active: boolean;
-}
-
-// Rendered when no admin-managed tiles exist yet (fresh deploy, migration not applied,
-// or the admin hasn't added any) — same "never leave the homepage broken" precedent as
-// getHomepageBanners/getHomepageNotifications, but these still resolve to real category
-// links rather than being decorative dead ends.
-const DEFAULT_TILES: HeroTileDisplay[] = [
-  { id: "default-pikachu", label: "Pikachu", icon_emoji: "⚡", color_theme: "sunrise", link_type: "category", link_value: "pokemon", display_order: 0, is_active: true },
-  { id: "default-goku", label: "Goku", icon_emoji: "🐉", color_theme: "ember", link_type: "category", link_value: "dragon-ball-z", display_order: 1, is_active: true },
-  { id: "default-naruto", label: "Naruto", icon_emoji: "🍃", color_theme: "citrus", link_type: "category", link_value: "naruto", display_order: 2, is_active: true },
-  { id: "default-luffy", label: "Luffy", icon_emoji: "⚓", color_theme: "blossom", link_type: "category", link_value: "one-piece", display_order: 3, is_active: true },
-];
-
 export default function HeroSection({ tiles }: { tiles: HeroTileDisplay[] }) {
-  const activeTiles = (tiles.length > 0 ? tiles : DEFAULT_TILES)
-    .filter((t) => t.is_active)
-    .slice(0, 4);
+  const activeTiles = tiles.filter((t) => t.is_active).slice(0, 4);
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden hero-gradient">

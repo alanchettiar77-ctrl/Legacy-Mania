@@ -11,6 +11,7 @@ jest.mock("@/lib/repositories/hero-tile-repository", () => ({
 
 import * as repo from "@/lib/repositories/hero-tile-repository";
 import { getHomepageHeroTiles, createHeroTile } from "@/lib/services/hero-tile-service";
+import { DEFAULT_HERO_TILES } from "@/lib/utils/hero-tile-defaults";
 
 describe("hero-tile-service", () => {
   beforeEach(() => jest.clearAllMocks());
@@ -20,9 +21,21 @@ describe("hero-tile-service", () => {
     expect(await getHomepageHeroTiles()).toEqual([{ id: "t1" }]);
   });
 
-  it("getHomepageHeroTiles swallows errors and returns an empty array", async () => {
+  it("getHomepageHeroTiles returns DEFAULT_HERO_TILES when no rows exist at all (nothing ever configured)", async () => {
+    (repo.listActiveHeroTiles as jest.Mock).mockResolvedValue([]);
+    (repo.listHeroTiles as jest.Mock).mockResolvedValue([]);
+    expect(await getHomepageHeroTiles()).toEqual(DEFAULT_HERO_TILES);
+  });
+
+  it("getHomepageHeroTiles returns [] when rows exist but the admin deactivated all of them", async () => {
+    (repo.listActiveHeroTiles as jest.Mock).mockResolvedValue([]);
+    (repo.listHeroTiles as jest.Mock).mockResolvedValue([{ id: "t1", is_active: false }]);
+    expect(await getHomepageHeroTiles()).toEqual([]);
+  });
+
+  it("getHomepageHeroTiles swallows errors and returns DEFAULT_HERO_TILES", async () => {
     (repo.listActiveHeroTiles as jest.Mock).mockRejectedValue(new Error("relation does not exist"));
-    await expect(getHomepageHeroTiles()).resolves.toEqual([]);
+    await expect(getHomepageHeroTiles()).resolves.toEqual(DEFAULT_HERO_TILES);
   });
 
   it("createHeroTile assigns the next display_order when none is given", async () => {

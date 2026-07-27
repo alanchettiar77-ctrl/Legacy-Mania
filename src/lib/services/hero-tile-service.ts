@@ -11,6 +11,7 @@ import {
 } from "@/lib/repositories/hero-tile-repository";
 import type { HeroTileCreateInput, HeroTileUpdateInput } from "@/lib/validation/hero-tile";
 import { resolveHeroTileHref } from "@/lib/utils/hero-tile-link";
+import { DEFAULT_HERO_TILES, type HeroTileDisplay } from "@/lib/utils/hero-tile-defaults";
 
 export type { HeroTileRow };
 // Re-exported for server-side consumers (API routes, page.tsx) that already import
@@ -20,13 +21,20 @@ export { resolveHeroTileHref };
 
 /** Storefront feed. Never throws — the homepage must render without hero tiles if
  * Supabase is unreachable or this migration hasn't been applied yet (matches
- * getHomepageBanners / getHomepageNotifications). */
-export async function getHomepageHeroTiles(): Promise<HeroTileRow[]> {
+ * getHomepageBanners / getHomepageNotifications). Three-way outcome:
+ * - active rows exist -> return them
+ * - zero active rows AND zero rows total (nothing ever configured) -> DEFAULT_HERO_TILES
+ * - zero active rows but rows DO exist (admin deliberately hid/deleted everything) -> []
+ * - any failure (unreachable, migration missing) -> DEFAULT_HERO_TILES, never throws */
+export async function getHomepageHeroTiles(): Promise<HeroTileDisplay[]> {
   try {
-    return await listActiveHeroTiles();
+    const active = await listActiveHeroTiles();
+    if (active.length > 0) return active;
+    const total = await listHeroTiles();
+    return total.length === 0 ? DEFAULT_HERO_TILES : [];
   } catch (error) {
     console.error("Failed to load homepage hero tiles", error);
-    return [];
+    return DEFAULT_HERO_TILES;
   }
 }
 
