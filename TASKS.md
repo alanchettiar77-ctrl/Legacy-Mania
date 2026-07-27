@@ -30,7 +30,8 @@ Pending and future work. AI Developer: check this before every session.
 - [ ] **Upload UPI QR** — via Admin → Settings → UPI Payment (verify still set after recent settings work)
 - [x] **Set WhatsApp number** — `NEXT_PUBLIC_WHATSAPP_NUMBER` set in `.env.local`
 - [ ] **Add product catalog** — Verify real products are uploaded via Admin → Products → Add Product
-- [x] **Set up categories** — Verify seeded categories are correct
+- [x] **Set up categories** — Verify seeded categories are correct (superseded by the full
+      generic Category CMS below — categories are now entirely admin-managed, not just seeded)
 - [ ] **Deploy to Vercel** — Confirm production deploy is live and env vars match `.env.local`
 - [ ] **Reconcile migration** — `supabase/migrations/001_initial_schema.sql` has uncommitted local changes; confirm they match the live Supabase schema, then commit
 
@@ -63,6 +64,12 @@ Pending and future work. AI Developer: check this before every session.
 
 ## 🟢 Priority 3 — Enhancement
 
+- [x] **Category CMS — full admin CRUD, soft delete, reassignment, SEO fields (2026-07-27)** —
+      Generic, unlimited-depth category tree: create/rename/move/reorder/hide/soft-delete,
+      cycle prevention, slug uniqueness, product/branch reassignment on delete, `meta_title`/
+      `meta_description`, recursive drag-and-drop admin tree, `/admin/categories/:id/edit` (was
+      a dead link) now built. Works identically for any collection type — verified via a
+      T-Shirts/Men/Hoodies regression test, zero category-specific code.
 - [x] **Soft-delete products** — Admin products table now has toggle visibility + remove (sets `is_active = false`)
 - [x] **JSON-LD structured data** — Product pages now emit `Product` schema with price, availability, seller
 - [x] **FAQ page** — `/faq`, now database-driven (`faqs` table) instead of hardcoded, 12 seeded Q&As, Radix accordion

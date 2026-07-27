@@ -14,20 +14,24 @@ const schema = z.object({
   parent_id: z.string().optional(),
   display_order: z.coerce.number().default(0),
   is_active: z.boolean().default(true),
+  meta_title: z.string().optional(),
+  meta_description: z.string().optional(),
 });
 type FormData = z.infer<typeof schema>;
 
-interface Category {
+interface ParentOption {
   id: string;
   name: string;
 }
 
 interface CategoryFormProps {
-  parentCategories: Category[];
+  parentCategories: ParentOption[];
+  /** Category ids to hide from the parent dropdown — always includes the category's own id and every descendant, so an edit can never create a cycle from the UI. */
+  excludeCategoryIds: string[];
   initialData?: Partial<FormData> & { id?: string };
 }
 
-export default function CategoryForm({ parentCategories, initialData }: CategoryFormProps) {
+export default function CategoryForm({ parentCategories, excludeCategoryIds, initialData }: CategoryFormProps) {
   const router = useRouter();
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -38,8 +42,12 @@ export default function CategoryForm({ parentCategories, initialData }: Category
       parent_id: initialData?.parent_id ?? "",
       display_order: initialData?.display_order ?? 0,
       is_active: initialData?.is_active ?? true,
+      meta_title: initialData?.meta_title ?? "",
+      meta_description: initialData?.meta_description ?? "",
     },
   });
+
+  const selectableParents = parentCategories.filter((p) => !excludeCategoryIds.includes(p.id));
 
   const onSubmit = async (data: FormData) => {
     const payload = {
@@ -49,6 +57,8 @@ export default function CategoryForm({ parentCategories, initialData }: Category
       parent_id: data.parent_id || null,
       display_order: data.display_order,
       is_active: data.is_active,
+      meta_title: data.meta_title ?? null,
+      meta_description: data.meta_description ?? null,
     };
 
     const res = initialData?.id
@@ -64,21 +74,23 @@ export default function CategoryForm({ parentCategories, initialData }: Category
         });
 
     if (!res.ok) {
-      toast.error("Failed to save category");
+      const body = await res.json().catch(() => ({}));
+      toast.error(body.error ?? "Failed to save category");
       return;
     }
     toast.success(initialData?.id ? "Category updated" : "Category created");
     router.refresh();
-    form.reset();
+    if (!initialData?.id) form.reset();
   };
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
       <div>
-        <label className="block text-sm font-medium mb-1.5">Name *</label>
+        <label htmlFor="category-name" className="block text-sm font-medium mb-1.5">Name *</label>
         <input
+          id="category-name"
           {...form.register("name")}
-          placeholder="e.g., Pokémon"
+          placeholder="e.g., T-Shirts"
           className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:outline-none text-sm"
           onChange={(e) => {
             form.setValue("name", e.target.value);
@@ -91,31 +103,54 @@ export default function CategoryForm({ parentCategories, initialData }: Category
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5">Slug *</label>
+        <label htmlFor="category-slug" className="block text-sm font-medium mb-1.5">Slug *</label>
         <input
+          id="category-slug"
           {...form.register("slug")}
-          placeholder="pokemon"
+          placeholder="t-shirts"
           className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:outline-none text-sm font-mono"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5">Parent Category</label>
+        <label htmlFor="category-parent" className="block text-sm font-medium mb-1.5">Parent Category</label>
         <select
+          id="category-parent"
           {...form.register("parent_id")}
           className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:outline-none text-sm"
         >
           <option value="">No Parent (Top Level)</option>
-          {parentCategories.map((cat) => (
+          {selectableParents.map((cat) => (
             <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5">Description</label>
+        <label htmlFor="category-description" className="block text-sm font-medium mb-1.5">Description</label>
         <textarea
+          id="category-description"
           {...form.register("description")}
+          rows={2}
+          className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:outline-none text-sm resize-none"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="category-meta-title" className="block text-sm font-medium mb-1.5">Meta Title</label>
+        <input
+          id="category-meta-title"
+          {...form.register("meta_title")}
+          placeholder="e.g., Kanto Region Cards — Legacy Mania"
+          className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:outline-none text-sm"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="category-meta-description" className="block text-sm font-medium mb-1.5">Meta Description</label>
+        <textarea
+          id="category-meta-description"
+          {...form.register("meta_description")}
           rows={2}
           className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary focus:outline-none text-sm resize-none"
         />
@@ -123,8 +158,9 @@ export default function CategoryForm({ parentCategories, initialData }: Category
 
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <label className="block text-sm font-medium mb-1.5">Display Order</label>
+          <label htmlFor="category-display-order" className="block text-sm font-medium mb-1.5">Display Order</label>
           <input
+            id="category-display-order"
             {...form.register("display_order")}
             type="number"
             min="0"

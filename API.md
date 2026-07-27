@@ -43,8 +43,12 @@ a dedicated `route.test.ts`; page-level access to `/admin/*` is separately cover
 | POST | `/api/admin/banners/:id/duplicate` | Copy a banner as a hidden draft |
 | POST | `/api/admin/banners/reorder` | Body `{ ids: uuid[] }` — rewrites `display_order` to match |
 | GET/PATCH | `/api/admin/branding` | Brand asset slots (logo, favicon, OG/Twitter/PWA images) + `logo_hidden`. PATCH with `""` clears a slot back to default. Audit-logged with old+new values. |
+| POST | `/api/admin/categories` | Create a category. Body: `name`/`slug`/`description`/`parent_id`/`display_order`/`is_active`/`meta_title`/`meta_description`. Rate-limited (60/min per IP). Audit-logged. |
+| PATCH | `/api/admin/categories/:id` | Update category content fields (`name`/`slug`/`description`/`parent_id`/`display_order`/`is_active`/`meta_title`/`meta_description`). Rate-limited (60/min per IP). Audit-logged. `409` on slug conflict or a `parent_id` that would create a cycle (moving a category under itself or one of its own descendants). |
+| DELETE | `/api/admin/categories/:id` | Soft-deletes a category (`deleted_at`). Body `{ reassignChildrenTo?, reassignProductsTo? }` — optionally reassign children/products to another category in the same request. `409` if the category still has children or active products and no reassignment target was given. Rate-limited (60/min per IP). Audit-logged. |
+| POST | `/api/admin/categories/:id/reassign-products` | Body `{ toCategoryId }` — moves every product from `:id` to `toCategoryId`. Rate-limited (60/min per IP). Audit-logged. |
 | PATCH | `/api/admin/categories/order` | Body `{ ids: uuid[] }` — rewrites category `display_order` |
-| PATCH | `/api/admin/categories/:id/branding` | Category `icon_url`/`appearance`/`is_featured`/`show_on_homepage`/`is_active` |
+| PATCH | `/api/admin/categories/:id/branding` | Category `icon_url`/`appearance`/`is_featured`/`show_on_homepage` — `is_active` was removed from this schema; it's a content-endpoint (Activate/Deactivate) concern now, not a visual one. |
 | POST | `/api/admin/products/reorder` | Body `{ ids: string[] }` — rewrites product `display_order`. No rate limit or audit log (matches `/api/admin/products` sibling route behavior). `requireAdmin()` only. |
 | PATCH/DELETE | `/api/admin/faqs/:id` | Update/delete a FAQ |
 | POST | `/api/media/upload` | Upload a file. Form fields: `file` (binary), `namespace` (`"banner-desktop"` \| `"banner-mobile"` \| `"products"` \| `"branding"`). Returns `201` with `{ path, publicUrl, dimensionWarning }`. Rate-limited (30/min per admin). PNG/JPG/WEBP only, 2 MB max — SVG rejected (XSS risk). |

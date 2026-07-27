@@ -6,7 +6,7 @@ jest.mock("@/lib/repositories/category-repository", () => ({
   listAllCategories: () => mockListAllCategories(),
 }));
 
-import { getFlatCategories, getCategoryTree, getBreadcrumb, getDescendantCategoryIds } from "@/lib/services/catalog-service";
+import { getFlatCategories, getCategoryTree, getCategoryTreeForAdmin, getBreadcrumb, getDescendantCategoryIds } from "@/lib/services/catalog-service";
 import type { Category } from "@/types";
 
 const pokemon: Category = {
@@ -44,6 +44,15 @@ const dbz: Category = {
   parent_id: null,
 };
 
+const hiddenCategory: Category = {
+  ...pokemon,
+  id: "hidden-set",
+  name: "Hidden Set",
+  slug: "hidden-set",
+  parent_id: null,
+  is_active: false,
+};
+
 describe("getFlatCategories", () => {
   afterEach(() => jest.clearAllMocks());
 
@@ -68,6 +77,24 @@ describe("getCategoryTree", () => {
     expect(pokemonNode?.children?.[0].id).toBe("indigo-league");
     const dbzNode = tree.find((node) => node.id === "dbz");
     expect(dbzNode?.children).toHaveLength(0);
+  });
+});
+
+describe("getCategoryTreeForAdmin", () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it("nests children under their parent and includes inactive (hidden) categories", async () => {
+    mockListAllCategories.mockResolvedValue([pokemon, indigoLeague, dbz, hiddenCategory]);
+
+    const tree = await getCategoryTreeForAdmin();
+
+    expect(tree).toHaveLength(3);
+    const pokemonNode = tree.find((node) => node.id === "pokemon");
+    expect(pokemonNode?.children).toHaveLength(1);
+    expect(pokemonNode?.children?.[0].id).toBe("indigo-league");
+    const hiddenNode = tree.find((node) => node.id === "hidden-set");
+    expect(hiddenNode).toBeDefined();
+    expect(hiddenNode?.is_active).toBe(false);
   });
 });
 
@@ -102,6 +129,8 @@ describe("getBreadcrumb", () => {
 function catSimple(id: string, parent_id: string | null, is_active = true) {
   return { id, parent_id, is_active } as never;
 }
+
+const cat = (id: string, parent_id: string | null) => catSimple(id, parent_id, true);
 
 describe("getDescendantCategoryIds", () => {
   afterEach(() => jest.clearAllMocks());
@@ -166,5 +195,30 @@ describe("getDescendantCategoryIds", () => {
     ]);
     const ids = await getDescendantCategoryIds("parent");
     expect(ids).toEqual(["parent", "grandchild"]);
+  });
+
+  it("includes an inactive intermediate category's own id when includeInactive is true, unlike the default call", async () => {
+    mockListAllCategories.mockResolvedValue([
+      catSimple("A", null, true),
+      catSimple("B", "A", false),
+      catSimple("C", "B", true),
+    ]);
+
+    const defaultIds = await getDescendantCategoryIds("A");
+    expect(defaultIds.sort()).toEqual(["A", "C"].sort());
+
+    const inclusiveIds = await getDescendantCategoryIds("A", { includeInactive: true });
+    expect(inclusiveIds.sort()).toEqual(["A", "B", "C"].sort());
+  });
+
+  it("aggregates a non-card, admin-created hierarchy identically to a card franchise (T-Shirts → Men → Hoodies)", async () => {
+    mockListAllCategories.mockResolvedValue([
+      cat("t-shirts", null),
+      cat("men", "t-shirts"),
+      cat("hoodies", "men"),
+      cat("women", "t-shirts"),
+    ]);
+    const ids = await getDescendantCategoryIds("t-shirts");
+    expect(ids.sort()).toEqual(["t-shirts", "men", "hoodies", "women"].sort());
   });
 });

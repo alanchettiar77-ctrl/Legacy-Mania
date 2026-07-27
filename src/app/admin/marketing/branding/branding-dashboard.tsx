@@ -131,6 +131,20 @@ export default function BrandingDashboard({
     }
   };
 
+  const toggleActive = async (id: string, isActive: boolean) => {
+    try {
+      const updated = await apiRequest(`/api/admin/categories/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ is_active: isActive }),
+      });
+      setCategories((prev) => prev.map((c) => (c.id === id ? updated : c)));
+      return true;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update category visibility");
+      return false;
+    }
+  };
+
   const persistOrder = async (ordered: Category[]) => {
     setCategories(ordered);
     try {
@@ -336,7 +350,7 @@ export default function BrandingDashboard({
                     <Home className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => patchCategory(cat.id, { is_active: !cat.is_active })}
+                    onClick={() => toggleActive(cat.id, !cat.is_active)}
                     className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
                     title={cat.is_active ? "Hide everywhere (products kept)" : "Make visible"}
                   >

@@ -6,6 +6,23 @@ All notable changes are recorded here.
 
 ## [Unreleased]
 
+### Added
+
+- **Generic Category CMS.** Turned the existing `categories` table + ad-hoc admin routes into a
+  complete, generic, unlimited-depth Category CMS: soft delete (`deleted_at`, migration `012`,
+  blocked with a `409` until unresolved children/products are reassigned), cycle prevention on
+  re-parenting (reuses `CatalogService.getDescendantCategoryIds()` — no second tree-walk),
+  slug-uniqueness validation, product/branch reassignment (on delete or standalone via
+  `POST /api/admin/categories/:id/reassign-products`), SEO fields (`meta_title`/
+  `meta_description`) on the content endpoint, a recursive drag-and-drop admin tree UI, and the
+  previously-dead `/admin/categories/:id/edit` route now built (it linked to a page that never
+  existed before this work). `POST`/`PATCH /api/admin/categories*` now follow the same
+  rate-limit → `requireAdmin()` → validate → service → `recordAuditLog()` pattern as every other
+  admin route; `is_active` moved from the branding schema to the content schema (one source of
+  truth for Activate/Deactivate). Built generic — zero Pokémon- or card-specific code anywhere —
+  and verified via a non-card `T-Shirts → Men → Hoodies` hierarchy test (Task 9) proving it works
+  identically for any collection type, not just trading cards.
+
 ### Fixed
 
 - Parent category pages (e.g. `/catalog/pokemon`) and the `/api/products?category=` filter now

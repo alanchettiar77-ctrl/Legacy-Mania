@@ -56,7 +56,6 @@ export const categoryBrandingSchema = z
     appearance: categoryAppearanceSchema,
     is_featured: z.boolean(),
     show_on_homepage: z.boolean(),
-    is_active: z.boolean(),
   })
   .partial()
   .refine((d) => Object.keys(d).length > 0, "No fields to update");

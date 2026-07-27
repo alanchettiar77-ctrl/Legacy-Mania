@@ -82,8 +82,15 @@
 
 ## Category Structure
 
+Regions/sagas/arcs (and any future collection type — see below) are fully admin-managed via
+`/admin/categories`: create/rename/delete/reorder/hide, unlimited depth, drag-and-drop reorder
+of siblings, cycle-safe re-parenting (moving a branch under itself or its own descendants is
+rejected), slug-uniqueness enforced, soft delete (blocked with a 409 until children/products are
+reassigned). There is no fixed tree — the example below is illustrative of the shape, not a
+hardcoded structure:
+
 ```
-Pokémon
+Pokémon                     ← illustrative example, not fixed
 ├── Indigo League
 ├── Orange Islands
 ├── Johto
@@ -102,7 +109,9 @@ Digimon
 Yu-Gi-Oh!
 ```
 
-Admin can add unlimited categories and subcategories from `/admin/categories`.
+The category tree is generic — nothing about it is Pokémon- or card-specific. It works
+identically for a non-card product line (e.g. `T-Shirts → Men → Hoodies`), which is what this
+CMS's regression test (Task 9 of the generic-category-cms plan) verifies.
 
 ---
 
@@ -128,7 +137,9 @@ Admin can add unlimited categories and subcategories from `/admin/categories`.
 | `/admin/products/new` | Add product |
 | `/admin/orders` | Order management |
 | `/admin/orders/[id]` | Order detail + status update |
-| `/admin/categories` | Category management |
+| `/admin/categories` | Category management (recursive drag-and-drop tree) |
+| `/admin/categories/new` | Add category |
+| `/admin/categories/:id/edit` | Edit category (content, SEO fields, delete/reassign) |
 | `/admin/users` | User management |
 | `/admin/analytics` | Analytics overview |
 | `/admin/marketing/notifications` | Homepage notification manager (Marketing) |
