@@ -1,7 +1,9 @@
 const mockListActiveCategories = jest.fn();
+const mockListAllCategories = jest.fn();
 
 jest.mock("@/lib/repositories/category-repository", () => ({
   listActiveCategories: () => mockListActiveCategories(),
+  listAllCategories: () => mockListAllCategories(),
 }));
 
 import { getFlatCategories, getCategoryTree, getBreadcrumb, getDescendantCategoryIds } from "@/lib/services/catalog-service";
@@ -97,55 +99,55 @@ describe("getBreadcrumb", () => {
   });
 });
 
-function catSimple(id: string, parent_id: string | null) {
-  return { id, parent_id } as never;
+function catSimple(id: string, parent_id: string | null, is_active = true) {
+  return { id, parent_id, is_active } as never;
 }
 
 describe("getDescendantCategoryIds", () => {
   afterEach(() => jest.clearAllMocks());
 
   it("returns just the id when the category has no children", async () => {
-    mockListActiveCategories.mockResolvedValue([catSimple("a", null)]);
+    mockListAllCategories.mockResolvedValue([catSimple("a", null, true)]);
     await expect(getDescendantCategoryIds("a")).resolves.toEqual(["a"]);
   });
 
   it("includes direct children", async () => {
-    mockListActiveCategories.mockResolvedValue([
-      catSimple("pokemon", null),
-      catSimple("indigo", "pokemon"),
-      catSimple("orange", "pokemon"),
-      catSimple("dbz", null),
-      catSimple("saiyan", "dbz"),
+    mockListAllCategories.mockResolvedValue([
+      catSimple("pokemon", null, true),
+      catSimple("indigo", "pokemon", true),
+      catSimple("orange", "pokemon", true),
+      catSimple("dbz", null, true),
+      catSimple("saiyan", "dbz", true),
     ]);
     const ids = await getDescendantCategoryIds("pokemon");
     expect(ids.sort()).toEqual(["indigo", "orange", "pokemon"].sort());
   });
 
   it("includes grandchildren and deeper (unlimited nesting)", async () => {
-    mockListActiveCategories.mockResolvedValue([
-      catSimple("pokemon", null),
-      catSimple("kanto", "pokemon"),
-      catSimple("starters", "kanto"),
-      catSimple("fire", "starters"),
+    mockListAllCategories.mockResolvedValue([
+      catSimple("pokemon", null, true),
+      catSimple("kanto", "pokemon", true),
+      catSimple("starters", "kanto", true),
+      catSimple("fire", "starters", true),
     ]);
     const ids = await getDescendantCategoryIds("pokemon");
     expect(ids.sort()).toEqual(["pokemon", "kanto", "starters", "fire"].sort());
   });
 
   it("returns only the leaf id when given a leaf category", async () => {
-    mockListActiveCategories.mockResolvedValue([
-      catSimple("pokemon", null),
-      catSimple("indigo", "pokemon"),
+    mockListAllCategories.mockResolvedValue([
+      catSimple("pokemon", null, true),
+      catSimple("indigo", "pokemon", true),
     ]);
     await expect(getDescendantCategoryIds("indigo")).resolves.toEqual(["indigo"]);
   });
 
   it("handles cycles gracefully without hanging and returns each id at most once", async () => {
     // Create a cycle: a -> b -> c -> a
-    mockListActiveCategories.mockResolvedValue([
-      catSimple("a", "c"),
-      catSimple("b", "a"),
-      catSimple("c", "b"),
+    mockListAllCategories.mockResolvedValue([
+      catSimple("a", "c", true),
+      catSimple("b", "a", true),
+      catSimple("c", "b", true),
     ]);
     const ids = await getDescendantCategoryIds("a");
     // Should resolve without hanging
@@ -154,5 +156,15 @@ describe("getDescendantCategoryIds", () => {
     expect(new Set(ids).size).toBe(ids.length);
     // Starting from "a", should include all ids in the cycle
     expect(ids.sort()).toEqual(["a", "b", "c"].sort());
+  });
+
+  it("reaches active descendants through an inactive intermediate category, excluding the inactive id itself", async () => {
+    mockListAllCategories.mockResolvedValue([
+      catSimple("parent", null, true),
+      catSimple("child", "parent", false),
+      catSimple("grandchild", "child", true),
+    ]);
+    const ids = await getDescendantCategoryIds("parent");
+    expect(ids).toEqual(["parent", "grandchild"]);
   });
 });

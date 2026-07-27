@@ -1,5 +1,5 @@
 import type { Category, CategoryWithChildren } from "@/types";
-import { listActiveCategories } from "@/lib/repositories/category-repository";
+import { listActiveCategories, listAllCategories } from "@/lib/repositories/category-repository";
 
 export async function getFlatCategories(): Promise<Category[]> {
   return listActiveCategories();
@@ -38,18 +38,29 @@ export async function getBreadcrumb(categoryId: string): Promise<Category[]> {
 
 /**
  * Expands a category id into itself plus every descendant id at any depth,
- * via BFS over the full active-category list. Single source of truth for
- * "which category_ids count as belonging to this category" — used anywhere
- * products are filtered by category so parent categories aggregate their
- * whole subtree instead of matching only their own (product-less) id.
+ * via BFS over the full category tree (active and inactive). Single source
+ * of truth for "which category_ids count as belonging to this category" —
+ * used anywhere products are filtered by category so parent categories
+ * aggregate their whole subtree instead of matching only their own
+ * (product-less) id.
+ *
+ * The tree structure is built from *all* categories (including inactive
+ * ones) so an inactive intermediate category doesn't sever the path to its
+ * active descendants. The returned list, however, always includes the root
+ * categoryId itself, and otherwise only includes descendants whose
+ * is_active is true — an inactive descendant's own id is excluded from the
+ * result even though its active children/grandchildren are still reachable
+ * and included.
  *
  * Includes a visited set guard to prevent infinite loops if the category
  * hierarchy contains cycles (e.g., admin update creates a cycle in parent_id chain).
  */
 export async function getDescendantCategoryIds(categoryId: string): Promise<string[]> {
-  const categories = await listActiveCategories();
+  const categories = await listAllCategories();
+  const isActiveById = new Map<string, boolean>();
   const childrenByParent = new Map<string, string[]>();
   for (const cat of categories) {
+    isActiveById.set(cat.id, cat.is_active);
     if (cat.parent_id) {
       const siblings = childrenByParent.get(cat.parent_id) ?? [];
       siblings.push(cat.id);
@@ -65,7 +76,9 @@ export async function getDescendantCategoryIds(categoryId: string): Promise<stri
     for (const childId of childrenByParent.get(current) ?? []) {
       if (!visited.has(childId)) {
         visited.add(childId);
-        ids.push(childId);
+        if (isActiveById.get(childId)) {
+          ids.push(childId);
+        }
         queue.push(childId);
       }
     }
