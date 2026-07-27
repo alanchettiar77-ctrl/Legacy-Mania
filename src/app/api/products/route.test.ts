@@ -79,3 +79,12 @@ describe("GET /api/products category expansion", () => {
     expect(mockEq).not.toHaveBeenCalledWith("category_id", "pokemon");
   });
 });
+
+describe("GET /api/products category expansion — generic hierarchy", () => {
+  it("expands a non-card category the same way it expands a card category", async () => {
+    (getDescendantCategoryIds as jest.Mock).mockResolvedValue(["t-shirts", "men", "hoodies", "women"]);
+    await GET(req("?category=t-shirts"));
+    expect(getDescendantCategoryIds).toHaveBeenCalledWith("t-shirts");
+    expect(mockIn).toHaveBeenCalledWith("category_id", ["t-shirts", "men", "hoodies", "women"]);
+  });
+});

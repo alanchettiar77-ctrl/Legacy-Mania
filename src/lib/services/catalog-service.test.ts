@@ -130,6 +130,8 @@ function catSimple(id: string, parent_id: string | null, is_active = true) {
   return { id, parent_id, is_active } as never;
 }
 
+const cat = (id: string, parent_id: string | null) => catSimple(id, parent_id, true);
+
 describe("getDescendantCategoryIds", () => {
   afterEach(() => jest.clearAllMocks());
 
@@ -207,5 +209,16 @@ describe("getDescendantCategoryIds", () => {
 
     const inclusiveIds = await getDescendantCategoryIds("A", { includeInactive: true });
     expect(inclusiveIds.sort()).toEqual(["A", "B", "C"].sort());
+  });
+
+  it("aggregates a non-card, admin-created hierarchy identically to a card franchise (T-Shirts → Men → Hoodies)", async () => {
+    mockListAllCategories.mockResolvedValue([
+      cat("t-shirts", null),
+      cat("men", "t-shirts"),
+      cat("hoodies", "men"),
+      cat("women", "t-shirts"),
+    ]);
+    const ids = await getDescendantCategoryIds("t-shirts");
+    expect(ids.sort()).toEqual(["t-shirts", "men", "hoodies", "women"].sort());
   });
 });
