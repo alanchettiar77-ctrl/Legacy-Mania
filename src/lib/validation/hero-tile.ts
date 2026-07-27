@@ -3,7 +3,7 @@ import { z } from "zod";
 export const COLOR_THEMES = ["sunrise", "ember", "citrus", "blossom", "ocean", "violet"] as const;
 export const LINK_TYPES = ["category", "product", "collection", "search", "page", "custom_url"] as const;
 
-// Relative path ("/catalog/pokemon") or absolute http(s) URL — same rule banners' cta_url uses.
+// Relative path, absolute http(s) URL, or a bare slug (for category/product link types).
 const linkValue = z
   .string()
   .min(1, "Link value is required")
