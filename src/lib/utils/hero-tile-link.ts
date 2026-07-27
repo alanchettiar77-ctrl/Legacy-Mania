@@ -9,7 +9,7 @@ export interface HeroTileLinkFields {
  * Resolves a tile's link into a storefront href. Only `category` and `custom_url`
  * have dedicated destinations today; `product` maps to the existing product route.
  * `collection` / `search` / `page` are reserved for future modules (see the
- * generic-linking note in ROADMAP.md/AI_MEMORY.md) and, until those exist, fall back
+ * generic-linking note in AI_MEMORY.md) and, until those exist, fall back
  * to using link_value as a literal path.
  *
  * Deliberately dependency-free: this is imported directly by the "use client"

@@ -4,9 +4,10 @@
 -- Apply manually via Supabase SQL Editor, then verify via a PostgREST curl GET on
 -- /rest/v1/hero_tiles?select=id&limit=1 (see DATABASE.md).
 --
--- Uses the generic link_type/link_value model (not a bare category_id FK) so future
--- tiles can point at products, collections, search results, or arbitrary pages without
--- another migration. See the "Generic internal linking" note in ROADMAP.md.
+-- Uses a generic link_type/link_value model (not a bare category_id FK): link_type is
+-- one of category/product/collection/search/page/custom_url, and link_value holds the
+-- slug, id, or path that type resolves against. This lets future tiles point at
+-- products, collections, search results, or arbitrary pages without another migration.
 
 CREATE TABLE public.hero_tiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
