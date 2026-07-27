@@ -35,3 +35,33 @@ export async function getBreadcrumb(categoryId: string): Promise<Category[]> {
 
   return trail;
 }
+
+/**
+ * Expands a category id into itself plus every descendant id at any depth,
+ * via BFS over the full active-category list. Single source of truth for
+ * "which category_ids count as belonging to this category" — used anywhere
+ * products are filtered by category so parent categories aggregate their
+ * whole subtree instead of matching only their own (product-less) id.
+ */
+export async function getDescendantCategoryIds(categoryId: string): Promise<string[]> {
+  const categories = await listActiveCategories();
+  const childrenByParent = new Map<string, string[]>();
+  for (const cat of categories) {
+    if (cat.parent_id) {
+      const siblings = childrenByParent.get(cat.parent_id) ?? [];
+      siblings.push(cat.id);
+      childrenByParent.set(cat.parent_id, siblings);
+    }
+  }
+
+  const ids = [categoryId];
+  const queue = [categoryId];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const childId of childrenByParent.get(current) ?? []) {
+      ids.push(childId);
+      queue.push(childId);
+    }
+  }
+  return ids;
+}

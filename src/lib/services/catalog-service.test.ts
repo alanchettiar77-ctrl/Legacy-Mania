@@ -4,7 +4,7 @@ jest.mock("@/lib/repositories/category-repository", () => ({
   listActiveCategories: () => mockListActiveCategories(),
 }));
 
-import { getFlatCategories, getCategoryTree, getBreadcrumb } from "@/lib/services/catalog-service";
+import { getFlatCategories, getCategoryTree, getBreadcrumb, getDescendantCategoryIds } from "@/lib/services/catalog-service";
 import type { Category } from "@/types";
 
 const pokemon: Category = {
@@ -94,5 +94,49 @@ describe("getBreadcrumb", () => {
     const breadcrumb = await getBreadcrumb("does-not-exist");
 
     expect(breadcrumb).toEqual([]);
+  });
+});
+
+function catSimple(id: string, parent_id: string | null) {
+  return { id, parent_id } as never;
+}
+
+describe("getDescendantCategoryIds", () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it("returns just the id when the category has no children", async () => {
+    mockListActiveCategories.mockResolvedValue([catSimple("a", null)]);
+    await expect(getDescendantCategoryIds("a")).resolves.toEqual(["a"]);
+  });
+
+  it("includes direct children", async () => {
+    mockListActiveCategories.mockResolvedValue([
+      catSimple("pokemon", null),
+      catSimple("indigo", "pokemon"),
+      catSimple("orange", "pokemon"),
+      catSimple("dbz", null),
+      catSimple("saiyan", "dbz"),
+    ]);
+    const ids = await getDescendantCategoryIds("pokemon");
+    expect(ids.sort()).toEqual(["indigo", "orange", "pokemon"].sort());
+  });
+
+  it("includes grandchildren and deeper (unlimited nesting)", async () => {
+    mockListActiveCategories.mockResolvedValue([
+      catSimple("pokemon", null),
+      catSimple("kanto", "pokemon"),
+      catSimple("starters", "kanto"),
+      catSimple("fire", "starters"),
+    ]);
+    const ids = await getDescendantCategoryIds("pokemon");
+    expect(ids.sort()).toEqual(["pokemon", "kanto", "starters", "fire"].sort());
+  });
+
+  it("returns only the leaf id when given a leaf category", async () => {
+    mockListActiveCategories.mockResolvedValue([
+      catSimple("pokemon", null),
+      catSimple("indigo", "pokemon"),
+    ]);
+    await expect(getDescendantCategoryIds("indigo")).resolves.toEqual(["indigo"]);
   });
 });
