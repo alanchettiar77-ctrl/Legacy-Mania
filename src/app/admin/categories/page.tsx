@@ -24,7 +24,7 @@ export default async function AdminCategoriesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card border border-border rounded-2xl p-5">
           <h2 className="font-bold mb-4">Quick Add (top-level or pick a parent)</h2>
-          <CategoryForm parentCategories={tree.flatMap((c) => [c, ...(c.children ?? [])])} />
+          <CategoryForm parentCategories={tree.flatMap((c) => [c, ...(c.children ?? [])])} excludeCategoryIds={[]} />
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-5">
