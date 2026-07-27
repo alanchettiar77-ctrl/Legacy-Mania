@@ -42,6 +42,9 @@ a dedicated `route.test.ts`; page-level access to `/admin/*` is separately cover
 | PATCH/DELETE | `/api/admin/banners/:id` | Update / soft-delete a banner |
 | POST | `/api/admin/banners/:id/duplicate` | Copy a banner as a hidden draft |
 | POST | `/api/admin/banners/reorder` | Body `{ ids: uuid[] }` — rewrites `display_order` to match |
+| GET/POST | `/api/admin/hero-tiles` | List all / create homepage hero tiles. Rate-limited (60/min per IP). Mutations audit-logged. Body: `label`/`icon_emoji`/`color_theme` (`sunrise`\|`ember`\|`citrus`\|`blossom`\|`ocean`\|`violet`, default `sunrise`)/`link_type` (`category`\|`product`\|`collection`\|`search`\|`page`\|`custom_url`, default `category`)/`link_value` (slug, relative path, or http(s) URL)/`display_order`/`is_active`. |
+| PATCH/DELETE | `/api/admin/hero-tiles/:id` | Update (partial body, same fields as create) / soft-delete a hero tile. `404` if not found. |
+| POST | `/api/admin/hero-tiles/reorder` | Body `{ ids: uuid[] }` — rewrites `display_order` to match |
 | GET/PATCH | `/api/admin/branding` | Brand asset slots (logo, favicon, OG/Twitter/PWA images) + `logo_hidden`. PATCH with `""` clears a slot back to default. Audit-logged with old+new values. |
 | POST | `/api/admin/categories` | Create a category. Body: `name`/`slug`/`description`/`parent_id`/`display_order`/`is_active`/`meta_title`/`meta_description`. Rate-limited (60/min per IP). Audit-logged. |
 | PATCH | `/api/admin/categories/:id` | Update category content fields (`name`/`slug`/`description`/`parent_id`/`display_order`/`is_active`/`meta_title`/`meta_description`). Rate-limited (60/min per IP). Audit-logged. `409` on slug conflict or a `parent_id` that would create a cycle (moving a category under itself or one of its own descendants). |
