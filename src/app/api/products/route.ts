@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { applyProductSort } from "@/lib/services/product-service";
+import { getDescendantCategoryIds } from "@/lib/services/catalog-service";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -19,7 +20,10 @@ export async function GET(request: NextRequest) {
     .select("*, category:categories(id, name, slug)", { count: "exact" })
     .eq("is_active", true);
 
-  if (category) query = query.eq("category_id", category);
+  if (category) {
+    const categoryIds = await getDescendantCategoryIds(category);
+    query = query.in("category_id", categoryIds);
+  }
   if (featured === "true") query = query.eq("is_featured", true);
   if (search) query = query.ilike("name", `%${search}%`);
 

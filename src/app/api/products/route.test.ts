@@ -4,6 +4,7 @@
 const mockOrder = jest.fn();
 const mockRange = jest.fn();
 const mockEq = jest.fn();
+const mockIn = jest.fn();
 const mockIlike = jest.fn();
 const mockSelect = jest.fn();
 const mockFrom = jest.fn();
@@ -12,6 +13,7 @@ function makeChainable() {
   const chain: Record<string, jest.Mock> = {
     select: mockSelect,
     eq: mockEq,
+    in: mockIn,
     ilike: mockIlike,
     order: mockOrder,
     range: mockRange,
@@ -25,8 +27,13 @@ jest.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ from: (...args: unknown[]) => { mockFrom(...args); return makeChainable(); } }),
 }));
 
+jest.mock("@/lib/services/catalog-service", () => ({
+  getDescendantCategoryIds: jest.fn(),
+}));
+
 import { NextRequest } from "next/server";
 import { GET } from "@/app/api/products/route";
+import { getDescendantCategoryIds } from "@/lib/services/catalog-service";
 
 afterEach(() => jest.clearAllMocks());
 
@@ -60,5 +67,15 @@ describe("GET /api/products sort handling", () => {
   it("sorts name descending (Z-A)", async () => {
     await GET(req("?sort=name_desc"));
     expect(mockOrder).toHaveBeenCalledWith("name", { ascending: false });
+  });
+});
+
+describe("GET /api/products category expansion", () => {
+  it("expands a parent category into itself + descendants via .in(), not a bare .eq()", async () => {
+    (getDescendantCategoryIds as jest.Mock).mockResolvedValue(["pokemon", "indigo", "orange"]);
+    await GET(req("?category=pokemon"));
+    expect(getDescendantCategoryIds).toHaveBeenCalledWith("pokemon");
+    expect(mockIn).toHaveBeenCalledWith("category_id", ["pokemon", "indigo", "orange"]);
+    expect(mockEq).not.toHaveBeenCalledWith("category_id", "pokemon");
   });
 });
