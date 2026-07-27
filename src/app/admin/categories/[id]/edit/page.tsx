@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { getCategoryTreeForAdmin } from "@/lib/services/catalog-service";
-import { getDescendantCategoryIds } from "@/lib/services/catalog-service";
+import { getCategoryTreeForAdmin, getDescendantCategoryIds } from "@/lib/services/catalog-service";
 import CategoryForm from "@/components/admin/category-form";
+import type { CategoryWithChildren } from "@/types";
 
-function flatten(tree: Awaited<ReturnType<typeof getCategoryTreeForAdmin>>): { id: string; name: string }[] {
-  return tree.flatMap((cat) => [{ id: cat.id, name: cat.name }, ...flatten(cat.children ?? [])]);
+function flatten(tree: CategoryWithChildren[]): CategoryWithChildren[] {
+  return tree.flatMap((cat) => [cat, ...flatten(cat.children ?? [])]);
 }
 
 export default async function EditCategoryPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,13 +14,7 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ i
   const current = flat.find((c) => c.id === id);
   if (!current) notFound();
 
-  const descendantIds = await getDescendantCategoryIds(id);
-
-  const fullTree = await getCategoryTreeForAdmin();
-  const fullFlatWithFields = fullTree.flatMap(function collect(cat: (typeof fullTree)[number]): typeof fullTree {
-    return [cat, ...(cat.children ?? []).flatMap(collect)];
-  });
-  const source = fullFlatWithFields.find((c) => c.id === id)!;
+  const descendantIds = await getDescendantCategoryIds(id, { includeInactive: true });
 
   return (
     <div className="max-w-lg space-y-6">
@@ -30,18 +24,18 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ i
       </div>
       <div className="bg-card border border-border rounded-2xl p-5">
         <CategoryForm
-          parentCategories={flat}
+          parentCategories={flat.map((c) => ({ id: c.id, name: c.name }))}
           excludeCategoryIds={descendantIds}
           initialData={{
-            id: source.id,
-            name: source.name,
-            slug: source.slug,
-            description: source.description ?? "",
-            parent_id: source.parent_id ?? "",
-            display_order: source.display_order,
-            is_active: source.is_active,
-            meta_title: source.meta_title ?? "",
-            meta_description: source.meta_description ?? "",
+            id: current.id,
+            name: current.name,
+            slug: current.slug,
+            description: current.description ?? "",
+            parent_id: current.parent_id ?? "",
+            display_order: current.display_order,
+            is_active: current.is_active,
+            meta_title: current.meta_title ?? "",
+            meta_description: current.meta_description ?? "",
           }}
         />
       </div>
