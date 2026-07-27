@@ -42,6 +42,9 @@ export async function getBreadcrumb(categoryId: string): Promise<Category[]> {
  * "which category_ids count as belonging to this category" — used anywhere
  * products are filtered by category so parent categories aggregate their
  * whole subtree instead of matching only their own (product-less) id.
+ *
+ * Includes a visited set guard to prevent infinite loops if the category
+ * hierarchy contains cycles (e.g., admin update creates a cycle in parent_id chain).
  */
 export async function getDescendantCategoryIds(categoryId: string): Promise<string[]> {
   const categories = await listActiveCategories();
@@ -56,11 +59,15 @@ export async function getDescendantCategoryIds(categoryId: string): Promise<stri
 
   const ids = [categoryId];
   const queue = [categoryId];
+  const visited = new Set<string>([categoryId]);
   while (queue.length > 0) {
     const current = queue.shift()!;
     for (const childId of childrenByParent.get(current) ?? []) {
-      ids.push(childId);
-      queue.push(childId);
+      if (!visited.has(childId)) {
+        visited.add(childId);
+        ids.push(childId);
+        queue.push(childId);
+      }
     }
   }
   return ids;

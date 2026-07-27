@@ -139,4 +139,20 @@ describe("getDescendantCategoryIds", () => {
     ]);
     await expect(getDescendantCategoryIds("indigo")).resolves.toEqual(["indigo"]);
   });
+
+  it("handles cycles gracefully without hanging and returns each id at most once", async () => {
+    // Create a cycle: a -> b -> c -> a
+    mockListActiveCategories.mockResolvedValue([
+      catSimple("a", "c"),
+      catSimple("b", "a"),
+      catSimple("c", "b"),
+    ]);
+    const ids = await getDescendantCategoryIds("a");
+    // Should resolve without hanging
+    expect(ids).toBeDefined();
+    // Each id should appear exactly once
+    expect(new Set(ids).size).toBe(ids.length);
+    // Starting from "a", should include all ids in the cycle
+    expect(ids.sort()).toEqual(["a", "b", "c"].sort());
+  });
 });
