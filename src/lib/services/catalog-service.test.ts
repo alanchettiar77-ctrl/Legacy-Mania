@@ -167,4 +167,18 @@ describe("getDescendantCategoryIds", () => {
     const ids = await getDescendantCategoryIds("parent");
     expect(ids).toEqual(["parent", "grandchild"]);
   });
+
+  it("includes an inactive intermediate category's own id when includeInactive is true, unlike the default call", async () => {
+    mockListAllCategories.mockResolvedValue([
+      catSimple("A", null, true),
+      catSimple("B", "A", false),
+      catSimple("C", "B", true),
+    ]);
+
+    const defaultIds = await getDescendantCategoryIds("A");
+    expect(defaultIds.sort()).toEqual(["A", "C"].sort());
+
+    const inclusiveIds = await getDescendantCategoryIds("A", { includeInactive: true });
+    expect(inclusiveIds.sort()).toEqual(["A", "B", "C"].sort());
+  });
 });

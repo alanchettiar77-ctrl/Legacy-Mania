@@ -75,6 +75,7 @@ describe("editCategory", () => {
     (getDescendantCategoryIds as jest.Mock).mockResolvedValue(["pokemon", "kanto", "starters"]);
     await expect(editCategory("pokemon", { parent_id: "starters" })).rejects.toThrow(CategoryCycleError);
     expect(updateCategoryBranding).not.toHaveBeenCalled();
+    expect(getDescendantCategoryIds).toHaveBeenCalledWith("pokemon", { includeInactive: true });
   });
 
   it("allows setting parent_id to an unrelated category", async () => {
@@ -82,6 +83,7 @@ describe("editCategory", () => {
     (getDescendantCategoryIds as jest.Mock).mockResolvedValue(["kanto"]);
     (updateCategoryBranding as jest.Mock).mockResolvedValue({ id: "kanto", parent_id: "unrelated" });
     await expect(editCategory("kanto", { parent_id: "unrelated" })).resolves.toEqual({ id: "kanto", parent_id: "unrelated" });
+    expect(getDescendantCategoryIds).toHaveBeenCalledWith("kanto", { includeInactive: true });
   });
 
   it("returns null when the category doesn't exist", async () => {

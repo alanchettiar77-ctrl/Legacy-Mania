@@ -47,15 +47,22 @@ export async function getBreadcrumb(categoryId: string): Promise<Category[]> {
  * The tree structure is built from *all* categories (including inactive
  * ones) so an inactive intermediate category doesn't sever the path to its
  * active descendants. The returned list, however, always includes the root
- * categoryId itself, and otherwise only includes descendants whose
+ * categoryId itself, and by default only includes descendants whose
  * is_active is true — an inactive descendant's own id is excluded from the
  * result even though its active children/grandchildren are still reachable
- * and included.
+ * and included. Pass `{ includeInactive: true }` to include every visited
+ * descendant's id regardless of is_active -- used by cycle-detection callers
+ * (e.g. category-service's editCategory) where an inactive intermediate
+ * category must still count as "part of this subtree" even though it is
+ * filtered out of product-aggregation queries.
  *
  * Includes a visited set guard to prevent infinite loops if the category
  * hierarchy contains cycles (e.g., admin update creates a cycle in parent_id chain).
  */
-export async function getDescendantCategoryIds(categoryId: string): Promise<string[]> {
+export async function getDescendantCategoryIds(
+  categoryId: string,
+  options: { includeInactive?: boolean } = {}
+): Promise<string[]> {
   const categories = await listAllCategories();
   const isActiveById = new Map<string, boolean>();
   const childrenByParent = new Map<string, string[]>();
@@ -76,7 +83,7 @@ export async function getDescendantCategoryIds(categoryId: string): Promise<stri
     for (const childId of childrenByParent.get(current) ?? []) {
       if (!visited.has(childId)) {
         visited.add(childId);
-        if (isActiveById.get(childId)) {
+        if (options.includeInactive || isActiveById.get(childId)) {
           ids.push(childId);
         }
         queue.push(childId);

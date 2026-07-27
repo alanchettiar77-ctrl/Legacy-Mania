@@ -42,7 +42,7 @@ export async function editCategory(
 
   if (payload.parent_id !== undefined && payload.parent_id !== null) {
     if (payload.parent_id === id) throw new CategoryCycleError();
-    const descendantIds = await getDescendantCategoryIds(id);
+    const descendantIds = await getDescendantCategoryIds(id, { includeInactive: true });
     if (descendantIds.includes(payload.parent_id)) throw new CategoryCycleError();
   }
 
