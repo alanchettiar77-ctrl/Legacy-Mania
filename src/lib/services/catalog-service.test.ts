@@ -6,7 +6,7 @@ jest.mock("@/lib/repositories/category-repository", () => ({
   listAllCategories: () => mockListAllCategories(),
 }));
 
-import { getFlatCategories, getCategoryTree, getBreadcrumb, getDescendantCategoryIds } from "@/lib/services/catalog-service";
+import { getFlatCategories, getCategoryTree, getCategoryTreeForAdmin, getBreadcrumb, getDescendantCategoryIds } from "@/lib/services/catalog-service";
 import type { Category } from "@/types";
 
 const pokemon: Category = {
@@ -44,6 +44,15 @@ const dbz: Category = {
   parent_id: null,
 };
 
+const hiddenCategory: Category = {
+  ...pokemon,
+  id: "hidden-set",
+  name: "Hidden Set",
+  slug: "hidden-set",
+  parent_id: null,
+  is_active: false,
+};
+
 describe("getFlatCategories", () => {
   afterEach(() => jest.clearAllMocks());
 
@@ -68,6 +77,24 @@ describe("getCategoryTree", () => {
     expect(pokemonNode?.children?.[0].id).toBe("indigo-league");
     const dbzNode = tree.find((node) => node.id === "dbz");
     expect(dbzNode?.children).toHaveLength(0);
+  });
+});
+
+describe("getCategoryTreeForAdmin", () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it("nests children under their parent and includes inactive (hidden) categories", async () => {
+    mockListAllCategories.mockResolvedValue([pokemon, indigoLeague, dbz, hiddenCategory]);
+
+    const tree = await getCategoryTreeForAdmin();
+
+    expect(tree).toHaveLength(3);
+    const pokemonNode = tree.find((node) => node.id === "pokemon");
+    expect(pokemonNode?.children).toHaveLength(1);
+    expect(pokemonNode?.children?.[0].id).toBe("indigo-league");
+    const hiddenNode = tree.find((node) => node.id === "hidden-set");
+    expect(hiddenNode).toBeDefined();
+    expect(hiddenNode?.is_active).toBe(false);
   });
 });
 

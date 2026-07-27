@@ -22,6 +22,23 @@ export async function getCategoryTree(): Promise<CategoryWithChildren[]> {
   return roots;
 }
 
+export async function getCategoryTreeForAdmin(): Promise<CategoryWithChildren[]> {
+  const categories = await listAllCategories();
+  const byId = new Map<string, CategoryWithChildren>();
+  categories.forEach((cat) => byId.set(cat.id, { ...cat, children: [] }));
+
+  const roots: CategoryWithChildren[] = [];
+  byId.forEach((node) => {
+    if (node.parent_id && byId.has(node.parent_id)) {
+      byId.get(node.parent_id)!.children!.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  return roots;
+}
+
 export async function getBreadcrumb(categoryId: string): Promise<Category[]> {
   const categories = await listActiveCategories();
   const byId = new Map(categories.map((cat) => [cat.id, cat]));
