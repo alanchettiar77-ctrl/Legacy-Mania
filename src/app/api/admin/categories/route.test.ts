@@ -43,7 +43,14 @@ describe("POST /api/admin/categories", () => {
     expect(createCategory).not.toHaveBeenCalled();
   });
 
-  it("returns 401/403 from requireAdmin before touching the service", async () => {
+  it("returns 401 from requireAdmin before touching the service", async () => {
+    (requireAdmin as jest.Mock).mockResolvedValue({ ok: false, response: new Response(null, { status: 401 }) });
+    const res = await POST(req(validBody));
+    expect(res.status).toBe(401);
+    expect(createCategory).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 from requireAdmin before touching the service", async () => {
     (requireAdmin as jest.Mock).mockResolvedValue({ ok: false, response: new Response(null, { status: 403 }) });
     const res = await POST(req(validBody));
     expect(res.status).toBe(403);
