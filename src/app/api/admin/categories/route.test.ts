@@ -72,6 +72,32 @@ describe("POST /api/admin/categories", () => {
     );
   });
 
+  it("forwards the full parsed payload (including meta_title/meta_description) to createCategory", async () => {
+    const fullBody = {
+      name: "T-Shirts",
+      slug: "t-shirts",
+      description: "Comfy shirts",
+      parent_id: null,
+      display_order: 2,
+      is_active: true,
+      meta_title: "T-Shirts | Shop",
+      meta_description: "Shop our t-shirts",
+    };
+    (createCategory as jest.Mock).mockResolvedValue({ id: "new-id", ...fullBody });
+    const res = await POST(req(fullBody));
+    expect(res.status).toBe(201);
+    expect(createCategory).toHaveBeenCalledWith({
+      name: "T-Shirts",
+      slug: "t-shirts",
+      description: "Comfy shirts",
+      parent_id: null,
+      display_order: 2,
+      is_active: true,
+      meta_title: "T-Shirts | Shop",
+      meta_description: "Shop our t-shirts",
+    });
+  });
+
   it("returns 409 on a slug conflict", async () => {
     (createCategory as jest.Mock).mockRejectedValue(new CategorySlugConflictError("t-shirts"));
     const res = await POST(req(validBody));

@@ -22,6 +22,11 @@ jest.mock("@/lib/services/category-service", () => ({
       super("This category has products — reassign them first");
     }
   },
+  CategoryInvalidReassignTargetError: class CategoryInvalidReassignTargetError extends Error {
+    constructor(message: string) {
+      super(message);
+    }
+  },
 }));
 
 import { requireAdmin } from "@/lib/supabase/admin-auth";
@@ -34,6 +39,7 @@ import {
   CategoryCycleError,
   CategoryHasChildrenError,
   CategoryHasProductsError,
+  CategoryInvalidReassignTargetError,
 } from "@/lib/services/category-service";
 import { NextRequest } from "next/server";
 import { PATCH, DELETE } from "./route";
@@ -159,6 +165,19 @@ describe("DELETE /api/admin/categories/[id]", () => {
     expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.error).toMatch(/products/i);
+    expect(recordAuditLog).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 on CategoryInvalidReassignTargetError", async () => {
+    (deleteCategory as jest.Mock).mockRejectedValue(
+      new CategoryInvalidReassignTargetError(
+        "reassignChildrenTo must be an existing category that is not this category or one of its descendants"
+      )
+    );
+    const res = await DELETE(makeRequest("DELETE", { reassignChildrenTo: "11111111-1111-1111-1111-111111111111" }), params);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toMatch(/reassignChildrenTo/);
     expect(recordAuditLog).not.toHaveBeenCalled();
   });
 

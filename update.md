@@ -358,6 +358,16 @@ convention — no CLI available in this environment.
 ### Next Steps
 - Human partner to apply migration `012` via the Supabase SQL Editor, then verify live
   (`deleted_at` column present, soft-delete/reassignment flows work against production data)
+- **Deploy-ordering hazard:** migration `012` MUST be applied *before* this branch is deployed,
+  not after. Every category read function (`listActiveCategories`, `listAllCategories`,
+  `listHomepageCategories`, `getCategoryById`, `getCategoryBySlug`) now filters on
+  `deleted_at=is.null`; against a database that hasn't had `012` applied yet, PostgREST 400s on
+  the unknown column and all of these throw — breaking the homepage category cards, `/catalog`,
+  `/catalog/[slug]`, the branding dashboard, and the entire category admin panel, not just the
+  new features.
+- Reassignment (delete-with-reassignment, standalone reassign-products) is API-only today; the
+  admin delete flow surfaces the resulting `409` error but has no UI to supply reassignment
+  targets yet. See `ROADMAP.md`'s Category CMS entry.
 - Remainder of the original Phase 3 scope is still open: `/api/products/:slug`, a products
   search endpoint, rarity/condition fields in the admin product form, and a navbar catalog tree
   (see `ROADMAP.md`'s "3b — Product/Catalog hardening" row)

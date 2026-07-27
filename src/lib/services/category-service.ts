@@ -69,6 +69,13 @@ export class CategoryHasProductsError extends Error {
   }
 }
 
+export class CategoryInvalidReassignTargetError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CategoryInvalidReassignTargetError";
+  }
+}
+
 export interface DeleteCategoryOptions {
   reassignChildrenTo?: string;
   reassignProductsTo?: string;
@@ -87,6 +94,33 @@ export async function deleteCategory(id: string, options: DeleteCategoryOptions 
   const productCount = await countProductsByCategory(id);
   if (productCount > 0 && !options.reassignProductsTo) {
     throw new CategoryHasProductsError();
+  }
+
+  if (options.reassignChildrenTo) {
+    if (options.reassignChildrenTo === id) {
+      throw new CategoryInvalidReassignTargetError(
+        "reassignChildrenTo must be an existing category that is not this category or one of its descendants"
+      );
+    }
+    const descendantIds = await getDescendantCategoryIds(id, { includeInactive: true });
+    if (descendantIds.includes(options.reassignChildrenTo)) {
+      throw new CategoryInvalidReassignTargetError(
+        "reassignChildrenTo must be an existing category that is not this category or one of its descendants"
+      );
+    }
+    const target = await getCategoryById(options.reassignChildrenTo);
+    if (!target) {
+      throw new CategoryInvalidReassignTargetError(
+        "reassignChildrenTo must be an existing category that is not this category or one of its descendants"
+      );
+    }
+  }
+
+  if (options.reassignProductsTo) {
+    const target = await getCategoryById(options.reassignProductsTo);
+    if (!target) {
+      throw new CategoryInvalidReassignTargetError("reassignProductsTo must be an existing category");
+    }
   }
 
   for (const child of directChildren) {

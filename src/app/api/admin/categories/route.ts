@@ -21,12 +21,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const category = await createCategory({
-      name: parsed.data.name,
-      slug: parsed.data.slug,
+      ...parsed.data,
       description: parsed.data.description ?? null,
       parent_id: parsed.data.parent_id ?? null,
-      display_order: parsed.data.display_order,
-      is_active: parsed.data.is_active,
     });
     await recordAuditLog({
       userId: auth.userId,

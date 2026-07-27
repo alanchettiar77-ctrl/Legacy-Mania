@@ -23,6 +23,7 @@ import {
   reassignProducts,
   CategoryHasChildrenError,
   CategoryHasProductsError,
+  CategoryInvalidReassignTargetError,
 } from "./category-service";
 import {
   insertCategory,
@@ -169,12 +170,15 @@ describe("deleteCategory", () => {
   });
 
   it("reassigns children then deletes when reassignChildrenTo is given", async () => {
-    (getCategoryById as jest.Mock).mockResolvedValue({ id: "parent", slug: "parent" });
+    (getCategoryById as jest.Mock).mockImplementation((id: string) =>
+      Promise.resolve({ id, slug: id })
+    );
     (listAllCategories as jest.Mock).mockResolvedValue([
       { id: "parent", parent_id: null },
       { id: "child", parent_id: "parent" },
     ]);
     (countProductsByCategory as jest.Mock).mockResolvedValue(0);
+    (getDescendantCategoryIds as jest.Mock).mockResolvedValue(["parent", "child"]);
     (updateCategoryBranding as jest.Mock).mockResolvedValue({ id: "child", parent_id: "other" });
 
     await deleteCategory("parent", { reassignChildrenTo: "other" });
@@ -184,7 +188,9 @@ describe("deleteCategory", () => {
   });
 
   it("reassigns products then deletes when reassignProductsTo is given", async () => {
-    (getCategoryById as jest.Mock).mockResolvedValue({ id: "leaf", slug: "leaf" });
+    (getCategoryById as jest.Mock).mockImplementation((id: string) =>
+      Promise.resolve({ id, slug: id })
+    );
     (listAllCategories as jest.Mock).mockResolvedValue([{ id: "leaf", parent_id: null }]);
     (countProductsByCategory as jest.Mock).mockResolvedValue(3);
     (reassignProductsCategory as jest.Mock).mockResolvedValue(3);
@@ -198,6 +204,73 @@ describe("deleteCategory", () => {
   it("throws when the category doesn't exist", async () => {
     (getCategoryById as jest.Mock).mockResolvedValue(null);
     await expect(deleteCategory("missing")).rejects.toThrow("Category not found");
+  });
+
+  it("rejects reassignChildrenTo === id without mutating anything", async () => {
+    (getCategoryById as jest.Mock).mockResolvedValue({ id: "parent", slug: "parent" });
+    (listAllCategories as jest.Mock).mockResolvedValue([
+      { id: "parent", parent_id: null },
+      { id: "child", parent_id: "parent" },
+    ]);
+    (countProductsByCategory as jest.Mock).mockResolvedValue(0);
+
+    await expect(
+      deleteCategory("parent", { reassignChildrenTo: "parent" })
+    ).rejects.toThrow(CategoryInvalidReassignTargetError);
+    expect(updateCategoryBranding).not.toHaveBeenCalled();
+    expect(reassignProductsCategory).not.toHaveBeenCalled();
+    expect(softDeleteCategory).not.toHaveBeenCalled();
+  });
+
+  it("rejects reassignChildrenTo that is a descendant of id, without mutating anything", async () => {
+    (getCategoryById as jest.Mock).mockResolvedValue({ id: "pokemon", slug: "pokemon" });
+    (listAllCategories as jest.Mock).mockResolvedValue([
+      { id: "pokemon", parent_id: null },
+      { id: "kanto", parent_id: "pokemon" },
+    ]);
+    (countProductsByCategory as jest.Mock).mockResolvedValue(0);
+    (getDescendantCategoryIds as jest.Mock).mockResolvedValue(["pokemon", "kanto", "starters"]);
+
+    await expect(
+      deleteCategory("pokemon", { reassignChildrenTo: "starters" })
+    ).rejects.toThrow(CategoryInvalidReassignTargetError);
+    expect(updateCategoryBranding).not.toHaveBeenCalled();
+    expect(reassignProductsCategory).not.toHaveBeenCalled();
+    expect(softDeleteCategory).not.toHaveBeenCalled();
+  });
+
+  it("rejects reassignChildrenTo pointing at a nonexistent category, without mutating anything", async () => {
+    (getCategoryById as jest.Mock).mockImplementation((id: string) =>
+      Promise.resolve(id === "parent" ? { id: "parent", slug: "parent" } : null)
+    );
+    (listAllCategories as jest.Mock).mockResolvedValue([
+      { id: "parent", parent_id: null },
+      { id: "child", parent_id: "parent" },
+    ]);
+    (countProductsByCategory as jest.Mock).mockResolvedValue(0);
+    (getDescendantCategoryIds as jest.Mock).mockResolvedValue(["parent", "child"]);
+
+    await expect(
+      deleteCategory("parent", { reassignChildrenTo: "missing-target" })
+    ).rejects.toThrow(CategoryInvalidReassignTargetError);
+    expect(updateCategoryBranding).not.toHaveBeenCalled();
+    expect(reassignProductsCategory).not.toHaveBeenCalled();
+    expect(softDeleteCategory).not.toHaveBeenCalled();
+  });
+
+  it("rejects reassignProductsTo pointing at a nonexistent category, without mutating anything", async () => {
+    (getCategoryById as jest.Mock).mockImplementation((id: string) =>
+      Promise.resolve(id === "leaf" ? { id: "leaf", slug: "leaf" } : null)
+    );
+    (listAllCategories as jest.Mock).mockResolvedValue([{ id: "leaf", parent_id: null }]);
+    (countProductsByCategory as jest.Mock).mockResolvedValue(3);
+
+    await expect(
+      deleteCategory("leaf", { reassignProductsTo: "missing-target" })
+    ).rejects.toThrow(CategoryInvalidReassignTargetError);
+    expect(updateCategoryBranding).not.toHaveBeenCalled();
+    expect(reassignProductsCategory).not.toHaveBeenCalled();
+    expect(softDeleteCategory).not.toHaveBeenCalled();
   });
 });
 

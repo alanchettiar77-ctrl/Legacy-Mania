@@ -9,6 +9,7 @@ import {
   CategoryCycleError,
   CategoryHasChildrenError,
   CategoryHasProductsError,
+  CategoryInvalidReassignTargetError,
 } from "@/lib/services/category-service";
 import { categoryUpdateSchema, categoryDeleteSchema } from "@/lib/validation/category";
 
@@ -75,7 +76,11 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     });
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof CategoryHasChildrenError || error instanceof CategoryHasProductsError) {
+    if (
+      error instanceof CategoryHasChildrenError ||
+      error instanceof CategoryHasProductsError ||
+      error instanceof CategoryInvalidReassignTargetError
+    ) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
     if (error instanceof Error && error.message === "Category not found") {
