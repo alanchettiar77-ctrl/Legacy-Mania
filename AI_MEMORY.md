@@ -66,8 +66,17 @@ rules) → `src/app/api/**/route.ts` (thin — auth, validate, call one service 
 - **Category delete is soft (`deleted_at`) and blocks on unresolved children/products** — never
   call `softDeleteCategory()` directly from a route; always go through
   `CategoryService.deleteCategory()`.
-- **Future CMS modules that link somewhere (homepage tiles, nav items, promo sections) must not
-  assume the target is always a category.** Model the link as `link_type`
+- **Future CMS modules that link somewhere (nav items, promo sections) must not assume the
+  target is always a category.** Model the link as `link_type`
   (`category`|`product`|`collection`|`search`|`page`|`custom_url`) + `link_value`, not a bare
-  `category_id` column — see `ROADMAP.md`'s Future Enhancements section for the full rationale.
-  This is guidance for Phase 4/5, not something the current Category CMS implements.
+  `category_id` column. `hero_tiles` (Phase 4, migration `013`) is the first table built this
+  way — see `resolveHeroTileHref` in `src/lib/utils/hero-tile-link.ts` for the reference
+  implementation.
+- **Tailwind JIT and DB-driven class names** — never build a Tailwind class string from database
+  data (e.g. `` `bg-${row.color}-500` ``); Tailwind's production build only includes classes it
+  can find as complete, static strings during its source scan, so a class assembled at runtime
+  from a DB value silently renders unstyled in production even though it looks fine in `next dev`.
+  Instead, map a stored key to a literal class string through a lookup object physically present
+  in source. See `COLOR_THEME_CLASSES` in `src/components/home/hero-section.tsx` — `color_theme`
+  is a DB-driven key (`sunrise`/`ember`/`citrus`/`blossom`/`ocean`/`violet`), looked up against a
+  `Record<string, string>` of complete literal class strings, never concatenated.

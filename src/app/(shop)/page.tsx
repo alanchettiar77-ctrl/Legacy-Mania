@@ -11,6 +11,7 @@ import Newsletter from "@/components/home/newsletter";
 import { createClient } from "@/lib/supabase/server";
 import { getHomepageNotifications } from "@/lib/services/notification-service";
 import { getHomepageBanners } from "@/lib/services/banner-service";
+import { getHomepageHeroTiles } from "@/lib/services/hero-tile-service";
 import { getHomepageCategories } from "@/lib/services/branding-service";
 import { applyProductSort } from "@/lib/services/product-service";
 
@@ -23,10 +24,11 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const [notifications, banners, categories, { data: featured }, { data: latest }] =
+  const [notifications, banners, heroTiles, categories, { data: featured }, { data: latest }] =
     await Promise.all([
       getHomepageNotifications("both"),
       getHomepageBanners(),
+      getHomepageHeroTiles(),
       // Admin-managed: honors show_on_homepage + display_order, cached with tag revalidation
       getHomepageCategories(),
       applyProductSort(
@@ -48,7 +50,7 @@ export default async function HomePage() {
   return (
     <>
       <AnnouncementBar items={notifications.items} config={notifications.config} />
-      <HeroSection />
+      <HeroSection tiles={heroTiles} />
       <BannerCarousel banners={banners} />
       <FeaturedCollections products={featured ?? []} />
       <PopularCategories categories={categories} />

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles, Shield, Zap } from "lucide-react";
 import { motion } from "framer-motion";
+import { resolveHeroTileHref } from "@/lib/utils/hero-tile-link";
+import type { HeroTileDisplay } from "@/lib/utils/hero-tile-defaults";
 
 const features = [
   { icon: Shield, label: "100% Authentic" },
@@ -10,14 +12,21 @@ const features = [
   { icon: Sparkles, label: "Premium Quality" },
 ];
 
-const floatingCards = [
-  { emoji: "⚡", name: "Pikachu", color: "from-yellow-400 to-orange-500", delay: 0 },
-  { emoji: "🐉", name: "Goku", color: "from-orange-400 to-red-500", delay: 0.2 },
-  { emoji: "🍃", name: "Naruto", color: "from-orange-500 to-yellow-600", delay: 0.4 },
-  { emoji: "⚓", name: "Luffy", color: "from-red-500 to-pink-600", delay: 0.6 },
-];
+// Tailwind's JIT compiler only includes class names it finds as literal strings in
+// source — a class string built dynamically from DB data would silently not render.
+// color_theme is stored as a key; this is the only place that maps it to real classes.
+const COLOR_THEME_CLASSES: Record<string, string> = {
+  sunrise: "from-yellow-400 to-orange-500",
+  ember: "from-orange-400 to-red-500",
+  citrus: "from-orange-500 to-yellow-600",
+  blossom: "from-red-500 to-pink-600",
+  ocean: "from-blue-400 to-cyan-500",
+  violet: "from-purple-400 to-indigo-500",
+};
 
-export default function HeroSection() {
+export default function HeroSection({ tiles }: { tiles: HeroTileDisplay[] }) {
+  const activeTiles = tiles.filter((t) => t.is_active).slice(0, 4);
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden hero-gradient">
       {/* Background glows */}
@@ -117,23 +126,22 @@ export default function HeroSection() {
           {/* Right — floating card grid */}
           <div className="relative hidden lg:block">
             <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-              {floatingCards.map((card, i) => (
+              {activeTiles.map((tile, i) => (
                 <motion.div
-                  key={card.name}
+                  key={tile.id}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.3 + card.delay }}
-                  className={`animate-float`}
-                  style={{ animationDelay: `${card.delay}s` }}
+                  transition={{ duration: 0.5, delay: 0.3 + i * 0.2 }}
+                  className="animate-float"
+                  style={{ animationDelay: `${i * 0.2}s` }}
                 >
-                  <div
-                    className={`bg-gradient-to-br ${card.color} rounded-2xl p-6 flex flex-col items-center justify-center aspect-square shadow-2xl border border-white/20`}
+                  <Link
+                    href={resolveHeroTileHref(tile)}
+                    className={`block bg-gradient-to-br ${COLOR_THEME_CLASSES[tile.color_theme] ?? COLOR_THEME_CLASSES.sunrise} rounded-2xl p-6 flex flex-col items-center justify-center aspect-square shadow-2xl border border-white/20 transition-transform hover:scale-105`}
                   >
-                    <span className="text-4xl mb-2">{card.emoji}</span>
-                    <span className="text-white font-bold text-sm">
-                      {card.name}
-                    </span>
-                  </div>
+                    <span className="text-4xl mb-2">{tile.icon_emoji}</span>
+                    <span className="text-white font-bold text-sm">{tile.label}</span>
+                  </Link>
                 </motion.div>
               ))}
             </div>

@@ -374,4 +374,47 @@ convention — no CLI available in this environment.
 
 ---
 
+## [2026-07-27] — v0.13.0 — Homepage Hero Tiles CMS ✅
+
+### Type
+Feature Addition — Full Admin CRUD, Reorder, Soft Delete for the Homepage Hero Tiles
+
+### Status
+✅ Full test suite and `tsc --noEmit` pass. Migration `013` (`hero_tiles` table) is handed to
+the human partner to apply manually via the Supabase SQL Editor per this repo's convention — no
+CLI available in this environment.
+
+### Features Added
+- `supabase/migrations/013_hero_tiles.sql` — new `hero_tiles` table using the generic
+  `link_type`/`link_value` linking model (`category`|`product`|`collection`|`search`|`page`|
+  `custom_url`) instead of a bare `category_id` FK — the first table built this way (see
+  `ROADMAP.md`'s Future Enhancements note it implements)
+- `GET`/`POST /api/admin/hero-tiles`, `PATCH`/`DELETE /api/admin/hero-tiles/:id`,
+  `POST /api/admin/hero-tiles/reorder` — standard rate-limit → `requireAdmin()` → zod validate →
+  service → `recordAuditLog()` pattern, matching every other admin CMS route
+- `/admin/marketing/hero-tiles` — new admin page: add/edit tiles via modal form, drag-reorder,
+  toggle active/hidden, delete with confirmation
+- `getHomepageHeroTiles()` — public read used by the homepage hero section; falls back to the 4
+  built-in default tiles if the table/migration isn't reachable, so the homepage never breaks
+- `COLOR_THEME_CLASSES` lookup in `hero-section.tsx` maps the DB-driven `color_theme` key to a
+  complete, literal Tailwind class string (never concatenates a class from DB data — see
+  `AI_MEMORY.md` gotcha)
+
+### Bugs Fixed
+- The 4 homepage hero tiles were previously hardcoded in `hero-section.tsx` and not clickable —
+  now database-driven and each links via `resolveHeroTileHref` to its configured destination.
+
+### Documentation
+- `API.md`, `DATABASE.md`, `ROADMAP.md`, `AI_MEMORY.md`, `CHANGELOG.md`, `TASKS.md`, `update.md`
+  all updated to reflect the CMS.
+
+### Next Steps
+- **Deploy-ordering warning:** migration `013` (`hero_tiles`) must be applied via the Supabase
+  SQL Editor before deploying this branch. Unlike migration `012` (categories), missing this one
+  does **not** break the homepage — `getHomepageHeroTiles()` catches the failure and the hero
+  section falls back to its 4 default tiles — but the new `/admin/marketing/hero-tiles` admin
+  page will show an empty/broken list until it's applied.
+
+---
+
 *Updated: 2026-07-27*
